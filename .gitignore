@@ -1,0 +1,7 @@
+# Test files
+*.out
+*.test
+
+# Misc
+*.log
+*.html
