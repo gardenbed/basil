@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-server
+  labels:
+    name: app-server
+data:
+  log-level: "warn"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-server
+  labels:
+    name: app-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      name: app-server
+  template:
+    metadata:
+      labels:
+        name: app-server
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: server
+          image: gardenbed/app-server:latest
+          imagePullPolicy: Always
+          command: [ "server" ]
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL_FILE
+              value: /configs/server/log-level
+          volumeMounts:
+            - name: app-server
+              mountPath: /configs/server
+              readOnly: true
+      volumes:
+        - name: app-server
+          configMap:
+            name: app-server
+            defaultMode: 420
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-server
+  labels:
+    name: app-server
+spec:
+  type: ClusterIP
+  selector:
+    name: app-server
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8080
+      targetPort: http

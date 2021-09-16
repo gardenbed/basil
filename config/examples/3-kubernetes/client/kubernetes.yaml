@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-client
+  labels:
+    name: app-client
+data:
+  log-level: "warn"
+  server-address: "http://app-server:8080"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-client
+  labels:
+    name: app-client
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      name: app-client
+  template:
+    metadata:
+      labels:
+        name: app-client
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: client
+          image: gardenbed/app-client:latest
+          imagePullPolicy: Always
+          command: [ "client" ]
+          env:
+            - name: LOG_LEVEL_FILE
+              value: /configs/client/log-level
+            - name: SERVER_ADDRESS_FILE
+              value: /configs/client/server-address
+          volumeMounts:
+            - name: app-client
+              mountPath: /configs/client
+              readOnly: true
+      volumes:
+        - name: app-client
+          configMap:
+            name: app-client
+            defaultMode: 420

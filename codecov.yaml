@@ -28,7 +28,7 @@ coverage:
       default:
         # The minimum coverage ratio for success
         # See https://docs.codecov.com/docs/commit-status#target
-        target: auto
+        target: 95%
   
     # Coverage for lines adjusted in the pull request or single commit
     # See https://docs.codecov.com/docs/commit-status#patch-status
@@ -40,3 +40,8 @@ coverage:
 # See https://docs.codecov.com/docs/codecovyml-reference#comment
 # See https://docs.codecov.com/docs/pull-request-comments
 comment: false
+
+# See https://docs.codecov.com/docs/ignoring-paths
+ignore:
+  - 'example/**/*'
+  - 'examples/**/*'

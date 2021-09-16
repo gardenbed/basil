@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: example-secret
+data:
+  auth-token: c3VwZXItc3Ryb25nLXNlY3JldAo=
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example
+  labels:
+    name: example
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: example
+  template:
+    metadata:
+      labels:
+        name: example
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: example
+          image: gardenbed/example:latest
+          imagePullPolicy: Always
+          command: [ "app" ]
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+             - name: AUTH_TOKEN_FILE
+               value: /secrets/example-secret/auth-token
+          volumeMounts:
+            - name: example-secret
+              mountPath: /secrets/example-secret
+              readOnly: true
+      volumes:
+        - name: example-secret
+          secret:
+            defaultMode: 420
+            secretName: example-secret
