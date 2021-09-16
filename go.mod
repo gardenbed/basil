@@ -5,6 +5,7 @@ go 1.17
 require (
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/stretchr/testify v1.7.0
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 )
 
 require (
