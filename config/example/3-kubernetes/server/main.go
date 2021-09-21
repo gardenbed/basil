@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/gardenbed/basil/config"
-	"github.com/gardenbed/basil/config/examples/logger"
+	"github.com/gardenbed/basil/config/example/logger"
 )
 
 var params = struct {
