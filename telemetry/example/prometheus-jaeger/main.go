@@ -104,5 +104,5 @@ func main() {
 
 	// Serving metrics endpoint
 	http.Handle("/metrics", p)
-	http.ListenAndServe(":8080", nil)
+	_ = http.ListenAndServe(":8080", nil)
 }
