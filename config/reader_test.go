@@ -7,9 +7,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/gardenbed/basil/ptr"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestReaderFromEnv(t *testing.T) {

@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/gardenbed/basil/ptr"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFlagValue(t *testing.T) {

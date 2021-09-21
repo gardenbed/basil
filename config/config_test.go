@@ -12,9 +12,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/gardenbed/basil/ptr"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type config struct {

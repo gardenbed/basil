@@ -1,70 +1,6 @@
-# Basil
+[![Go Doc][godoc-image]][godoc-url]
 
-Basil is a complete application framework and command-line tool for Go.
-
-## Libraries
-
-### Ptr
-[![Go Doc](https://pkg.go.dev/badge/github.com/gardenbed/basil)](https://pkg.go.dev/github.com/gardenbed/basil/ptr)
-
-`ptr` is a helper package for getting pointer to values. It eliminates the need for defining a new variable.
-
-### Factory
-[![Go Doc](https://pkg.go.dev/badge/github.com/gardenbed/basil)](https://pkg.go.dev/github.com/gardenbed/basil/testing/factory)
-
-`factory` is a helper package for generating random values for standard built-in types.
-
-### Health
-[![Go Doc](https://pkg.go.dev/badge/github.com/gardenbed/basil)](https://pkg.go.dev/github.com/gardenbed/basil/health)
-
-`health` is a minimal package for implementing health checks for services.
-
-#### Quick Start
-
-You can find examples [here](https://github.com/gardenbed/basil/tree/main/health/example).
-
-#### Behaviour
-
-Here is how the handler returned from `HandlerFunc()` behaves:
-
-  1. A new context with a *timeout* will be derived from the request context.
-  1. The `CheckHealth()` method of all registered *Checkers* will be called each in a new goroutine.
-      - If at least one of the check fails, the handler responds with `503` status code.
-      - Only the failed checks will be logged (if logging enabled).
-
-### Graceful
-[![Go Doc](https://pkg.go.dev/badge/github.com/gardenbed/basil)](https://pkg.go.dev/github.com/gardenbed/basil/graceful)
-
-`graceful` is a minimal package for building a graceful service. It implements an opinionated workflow for:
-
-  - Gracefully opening long-lived connections
-  - Gracefully retrying dropped connections
-  - Gracefully starting servers to listen
-  - Gracefully terminating all connections and listeners
-
-A *client* is any kind of long-lived connection that needs to be preserved
-during a service's operation (gRPC connection, database connection, message queue connection, etc.).
-A *server* is any kind of listener that needs to listen to a port and serve requests (HTTP server, gRPC server, etc.).
-
-#### Quick Start
-
-You can find examples [here](https://github.com/gardenbed/basil/tree/main/graceful/example).
-
-#### Behaviour
-
-Here is how the `StartAndWait` behaves:
-
-  1. It tries to connect all clients each in a new goroutine.
-      - If a client fails to connect, it will be automatically retried for a limited number of times with exponential backoff.
-      - If at least one client fails to connect (after retries), a graceful termination will be initiated.
-  1. Once all clients are connected successfully, all servers start listening each in a new goroutine.
-      - If any server errors, a graceful termination will be initiated.
-  1. Then, this method blocks the current goroutine until one of the following conditions happen:
-      - If any of `SIGHUP`, `SIGINT`, `SIGQUIT`, `SIGTERM` signals is sent, a graceful termination will be initiated.
-      - If any of the above signals is sent for the second time before the graceful termination is completed, the process will exit immediately with an error code.
-
-### Config
-[![Go Doc](https://pkg.go.dev/badge/github.com/gardenbed/basil)](https://pkg.go.dev/github.com/gardenbed/basil/config)
+# Config
 
 config is a minimal and unopinionated utility for reading configuration values based on [The 12-Factor App](https://12factor.net/config).
 
@@ -252,50 +188,6 @@ You can find an example of using `Watch()` method [here](https://github.com/gard
 [Here](https://milad.dev/posts/dynamic-config-secret) you will find a real-world example of using `config.Watch()`
 for **dynamic configuration management** and **secret injection** for Go applications running in Kubernetes.
 
-### Telemetry
-[![Go Doc](https://pkg.go.dev/badge/github.com/gardenbed/basil)](https://pkg.go.dev/github.com/gardenbed/basil/telemetry)
 
-This package can be used for building observable applications in Go.
-It aims to unify the three pillars of observability in one single package that is *easy-to-use* and *hard-to-misuse*.
-
-This package leverages the [OpenTelemetry](https://opentelemetry.io) API.
-OpenTelemetry is a great initiative that has brought all different standards and APIs for observability under one umbrella.
-However, due to the requirements for interoperability with existing systems, OpenTelemetry is highly abstract and complex.
-Many packages, configurations, and options make the developer experience not so pleasant.
-Furthermore, due to the changing nature of this project, OpenTelemetry specification changes often so does the Go library for OpenTelemetry.
-Currently, the tracing API is *stable*, the metric API is in *alpha* stage, and the logging API is *frozen*.
-
-IMHO, this is not how a single unified observability API should be.
-Hopefully, many of these issues will go away once all APIs reache to v1.0.0.
-This package intends to provide a very minimal and yet practical API for observability
-by hiding the complexity of configuring and using OpenTelemetry API.
-
-A probe encompasses a logger, meter, and tracer.
-It offers a unified developer experience for building observable applications.
-
-#### Quick Start
-
-You can find basic examples [here][here](https://github.com/gardenbed/basil/tree/main/telemetry/example).
-
-#### Options
-
-Most options can be set through environment variables.
-This lets SRE people change how the observability pipeline is configured without making any code changes.
-Options set explicity in the code will override those set by environment variables.
-
-| Environment Variable | Description |
-|----------------------|-------------|
-| `PROBE_NAME` | The name of service or application. |
-| `PROBE_VERSION` | The version of service or application. |
-| `PROBE_TAG_*` | Each variable prefixed with `PROBE_TAG_` represents a tag for the service or application. |
-| `PROBE_LOGGER_ENABLED` | Whether or not to create a logger (boolean). |
-| `PROBE_LOGGER_LEVEL` | The verbosity level for the logger (`debug`, `info`, `warn`, `error`, or `none`). |
-| `PROBE_PROMETHEUS_ENABLED` | Whether or not to configure and create a Prometheus meter (boolean). |
-| `PROBE_JAEGER_ENABLED` | Whether or not to configure and create a Jaeger tracer (boolean). |
-| `PROBE_JAEGER_AGENT_HOST` | The Jaeger agent host (i.e. `localhost`). |
-| `PROBE_JAEGER_AGENT_PORT` | The Jaeger agent port (i.e. `6832`). |
-| `PROBE_JAEGER_COLLECTOR_ENDPOINT` | The full URL to the Jaeger HTTP Thrift collector (i.e. `http://localhost:14268/api/traces`). |
-| `PROBE_JAEGER_COLLECTOR_USERNAME` | The username for Jaeger collector endpoint if basic auth is required. |
-| `PROBE_JAEGER_COLLECTOR_PASSWORD` | The password for Jaeger collector endpoint if basic auth is required. |
-| `PROBE_OPENTELEMETRY_ENABLED` | Whether or not to configure and create an OpenTelemetry Collector meter and tracer (boolean). |
-| `PROBE_OPENTELEMETRY_COLLECTOR_ADDRESS` | The address to OpenTelemetry collector (i.e. `localhost:55680`). |
+[godoc-url]: https://pkg.go.dev/github.com/gardenbed/basil/config
+[godoc-image]: https://pkg.go.dev/badge/github.com/gardenbed/basil/config
