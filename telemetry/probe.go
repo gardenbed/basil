@@ -157,6 +157,7 @@ func NewProbe(opts ...Option) Probe {
 func createResource(o options) *resource.Resource {
 	attrs := []attribute.KeyValue{
 		semconv.ServiceNameKey.String(o.name),
+		semconv.ServiceVersionKey.String(o.version),
 	}
 
 	for k, v := range o.tags {
@@ -196,11 +197,11 @@ func createLogger(o options) (Logger, closeFunc) {
 	}
 
 	if o.name != "" {
-		config.InitialFields["logger"] = o.name
+		config.InitialFields["service.name"] = o.name
 	}
 
 	if o.version != "" {
-		config.InitialFields["version"] = o.version
+		config.InitialFields["service.version"] = o.version
 	}
 
 	for k, v := range o.tags {
