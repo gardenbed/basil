@@ -5,17 +5,17 @@ Basil is a complete application framework and command-line tool for Go.
 ## Libraries
 
 ### Ptr
-[![Go Doc](https://pkg.go.dev/badge/github.com/gardenbed/basil)](https://pkg.go.dev/github.com/gardenbed/basil/ptr)
+[![Go Doc](https://pkg.go.dev/badge/github.com/gardenbed/basil/ptr)](https://pkg.go.dev/github.com/gardenbed/basil/ptr)
 
 `ptr` is a helper package for getting pointer to values. It eliminates the need for defining a new variable.
 
 ### Factory
-[![Go Doc](https://pkg.go.dev/badge/github.com/gardenbed/basil)](https://pkg.go.dev/github.com/gardenbed/basil/testing/factory)
+[![Go Doc](https://pkg.go.dev/badge/github.com/gardenbed/basil/factory)](https://pkg.go.dev/github.com/gardenbed/basil/factory)
 
 `factory` is a helper package for generating random values for standard built-in types.
 
 ### Health
-[![Go Doc](https://pkg.go.dev/badge/github.com/gardenbed/basil)](https://pkg.go.dev/github.com/gardenbed/basil/health)
+[![Go Doc](https://pkg.go.dev/badge/github.com/gardenbed/basil/health)](https://pkg.go.dev/github.com/gardenbed/basil/health)
 
 `health` is a minimal package for implementing health checks for services.
 
@@ -33,7 +33,7 @@ Here is how the handler returned from `HandlerFunc()` behaves:
       - Only the failed checks will be logged (if logging enabled).
 
 ### Graceful
-[![Go Doc](https://pkg.go.dev/badge/github.com/gardenbed/basil)](https://pkg.go.dev/github.com/gardenbed/basil/graceful)
+[![Go Doc](https://pkg.go.dev/badge/github.com/gardenbed/basil/graceful)](https://pkg.go.dev/github.com/gardenbed/basil/graceful)
 
 `graceful` is a minimal package for building a graceful service. It implements an opinionated workflow for:
 
@@ -64,7 +64,7 @@ Here is how the `StartAndWait` behaves:
       - If any of the above signals is sent for the second time before the graceful termination is completed, the process will exit immediately with an error code.
 
 ### Config
-[![Go Doc](https://pkg.go.dev/badge/github.com/gardenbed/basil)](https://pkg.go.dev/github.com/gardenbed/basil/config)
+[![Go Doc](https://pkg.go.dev/badge/github.com/gardenbed/basil/config)](https://pkg.go.dev/github.com/gardenbed/basil/config)
 
 config is a minimal and unopinionated utility for reading configuration values based on [The 12-Factor App](https://12factor.net/config).
 
@@ -253,7 +253,7 @@ You can find an example of using `Watch()` method [here](https://github.com/gard
 for **dynamic configuration management** and **secret injection** for Go applications running in Kubernetes.
 
 ### Telemetry
-[![Go Doc](https://pkg.go.dev/badge/github.com/gardenbed/basil)](https://pkg.go.dev/github.com/gardenbed/basil/telemetry)
+[![Go Doc](https://pkg.go.dev/badge/github.com/gardenbed/basil/telemetry)](https://pkg.go.dev/github.com/gardenbed/basil/telemetry)
 
 This package can be used for building observable applications in Go.
 It aims to unify the three pillars of observability in one single package that is *easy-to-use* and *hard-to-misuse*.
@@ -299,3 +299,23 @@ Options set explicity in the code will override those set by environment variabl
 | `PROBE_JAEGER_COLLECTOR_PASSWORD` | The password for Jaeger collector endpoint if basic auth is required. |
 | `PROBE_OPENTELEMETRY_ENABLED` | Whether or not to configure and create an OpenTelemetry Collector meter and tracer (boolean). |
 | `PROBE_OPENTELEMETRY_COLLECTOR_ADDRESS` | The address to OpenTelemetry collector (i.e. `localhost:55680`). |
+
+### HTTP Telemetry
+[![Go Doc](https://pkg.go.dev/badge/github.com/gardenbed/basil/telemetry/http)](https://pkg.go.dev/github.com/gardenbed/basil/telemetry/http)
+
+This package can be used for building observable HTTP servers and clients.
+It provides _middleware_ for wrapping http handlers and a drop-in http client to report logs, metrics, and traces out-of-the-box.
+
+#### Quick Start
+
+You can find basic examples [here](https://github.com/gardenbed/basil/tree/main/telemetry/http/example).
+
+### gRPC Telemetry
+[![Go Doc](https://pkg.go.dev/badge/github.com/gardenbed/basil/telemetry/grpc)](https://pkg.go.dev/github.com/gardenbed/basil/telemetry/grpc)
+
+This package can be used for building observable [gRPC](https://grpc.io) servers and clients.
+It uses _interceptors_ to intercept gRPC handlers and calls to report logs, metrics, and traces out-of-the-box.
+
+#### Quick Start
+
+You can find basic examples [here](https://github.com/gardenbed/basil/tree/main/telemetry/grpc/example).
