@@ -9,9 +9,7 @@ import (
 
 const (
 	maxUint64 = ^uint64(0)
-	minUint64 = 0
 	maxInt64  = int64(maxUint64 >> 1)
-	minInt64  = -maxInt64 - 1
 )
 
 var (
