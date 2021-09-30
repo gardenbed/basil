@@ -28,8 +28,8 @@ var (
 		"Sarah", "Scarlett",
 		"Tina",
 	}
-	domainNames = []string{"placeholder", "example"}
-	domainTLDs  = []string{"com", "net", "org", "info"}
+	domainNames = []string{"placeholder", "example", "alias"}
+	domainTLDs  = []string{"com", "net", "org", "info", "io", "dev"}
 )
 
 // Name generates a random human name.

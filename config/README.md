@@ -13,7 +13,7 @@ This library does not use `flag` package for parsing flags, so you can still par
 
 #### Quick Start
 
-You can find examples [here](https://github.com/gardenbed/basil/tree/main/config/example).
+You can find examples [here](./example).
 
 | Example | Description | asciinema |
 |---------|-------------|-----------|

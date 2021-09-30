@@ -5,7 +5,7 @@
 
 # Basil 🌿
 
-Basil is a complete application framework and command-line tool for Go.
+Basil is a complete application framework for Go.
 
 ## Why?
 
