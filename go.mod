@@ -8,7 +8,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/prometheus/client_golang v1.11.0
 	github.com/stretchr/testify v1.7.0
-	go.opentelemetry.io/otel v1.0.0
+	go.opentelemetry.io/otel v1.0.1
 	go.opentelemetry.io/otel/exporters/jaeger v1.0.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v0.23.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.0.0
@@ -17,7 +17,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.0.0
 	go.opentelemetry.io/otel/sdk/export/metric v0.23.0
 	go.opentelemetry.io/otel/sdk/metric v0.23.0
-	go.opentelemetry.io/otel/trace v1.0.0
+	go.opentelemetry.io/otel/trace v1.0.1
 	go.uber.org/zap v1.19.1
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/grpc v1.41.0
