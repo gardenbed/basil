@@ -99,7 +99,7 @@ func (p *probe) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func NewVoidProbe() Probe {
 	return &probe{
 		logger: new(voidLogger),
-		meter:  new(metric.NoopMeterProvider).Meter(""),
+		meter:  metric.NewNoopMeterProvider().Meter(""),
 		tracer: trace.NewNoopTracerProvider().Tracer(""),
 	}
 }
@@ -144,7 +144,7 @@ func NewProbe(opts ...Option) Probe {
 	}
 
 	if p.meter == (metric.Meter{}) {
-		p.meter = new(metric.NoopMeterProvider).Meter("")
+		p.meter = metric.NewNoopMeterProvider().Meter("")
 	}
 
 	if p.tracer == nil {
@@ -262,14 +262,14 @@ func createPrometheus(o options) (metric.Meter, http.Handler) {
 		),
 	)
 
-	checkpointer := processor.New(
+	checkpointerFactory := processor.NewFactory(
 		aggregator,
 		metricexport.CumulativeExportKindSelector(),
 		processor.WithMemory(true),
 	)
 
 	ctrl := controller.New(
-		checkpointer,
+		checkpointerFactory,
 		controller.WithResource(resource),
 	)
 
@@ -346,20 +346,20 @@ func createOpenTelemetry(o options) (metric.Meter, trace.Tracer, closeFunc) {
 
 	aggregator := simpleselector.NewWithExactDistribution()
 
-	checkpointer := processor.New(
+	checkpointerFactory := processor.NewFactory(
 		aggregator,
 		metricExporter,
 		processor.WithMemory(true),
 	)
 
 	ctrl := controller.New(
-		checkpointer,
+		checkpointerFactory,
 		controller.WithResource(resource),
 		controller.WithExporter(metricExporter),
 		controller.WithCollectPeriod(2*time.Second),
 	)
 
-	meterProvider := ctrl.MeterProvider()
+	var meterProvider metric.MeterProvider = ctrl
 
 	// ====================> Trace Provider <====================
 

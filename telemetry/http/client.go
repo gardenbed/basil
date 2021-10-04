@@ -32,19 +32,16 @@ func newClientInstruments(meter metric.Meter) *clientInstruments {
 		total: mm.NewInt64Counter(
 			"outgoing_http_requests_total",
 			metric.WithUnit(unit.Dimensionless),
-			metric.WithInstrumentationName(libraryName),
 			metric.WithDescription("The total number of outgoing http requests (client-side)"),
 		),
 		active: mm.NewInt64UpDownCounter(
 			"outgoing_http_requests_active",
 			metric.WithUnit(unit.Dimensionless),
-			metric.WithInstrumentationName(libraryName),
 			metric.WithDescription("The number of in-flight outgoing http requests (client-side)"),
 		),
 		latency: mm.NewInt64Histogram(
 			"outgoing_http_requests_latency",
 			metric.WithUnit(unit.Milliseconds),
-			metric.WithInstrumentationName(libraryName),
 			metric.WithDescription("The duration of outgoing http requests in milliseconds (client-side)"),
 		),
 	}

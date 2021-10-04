@@ -33,19 +33,16 @@ func newClientInstruments(meter metric.Meter) *clientInstruments {
 		total: mm.NewInt64Counter(
 			"outgoing_grpc_requests_total",
 			metric.WithUnit(unit.Dimensionless),
-			metric.WithInstrumentationName(libraryName),
 			metric.WithDescription("The total number of outgoing grpc requests (client-side)"),
 		),
 		active: mm.NewInt64UpDownCounter(
 			"outgoing_grpc_requests_active",
 			metric.WithUnit(unit.Dimensionless),
-			metric.WithInstrumentationName(libraryName),
 			metric.WithDescription("The number of in-flight outgoing grpc requests (client-side)"),
 		),
 		latency: mm.NewInt64Histogram(
 			"outgoing_grpc_requests_latency",
 			metric.WithUnit(unit.Milliseconds),
-			metric.WithInstrumentationName(libraryName),
 			metric.WithDescription("The duration of outgoing grpc requests in milliseconds (client-side)"),
 		),
 	}

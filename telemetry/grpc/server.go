@@ -34,25 +34,21 @@ func newServerInstruments(meter metric.Meter) *serverInstruments {
 		panic: mm.NewInt64Counter(
 			"incoming_grpc_requests_panic",
 			metric.WithUnit(unit.Dimensionless),
-			metric.WithInstrumentationName(libraryName),
 			metric.WithDescription("The total number of panics happened in grpc handlers (server-side)"),
 		),
 		total: mm.NewInt64Counter(
 			"incoming_grpc_requests_total",
 			metric.WithUnit(unit.Dimensionless),
-			metric.WithInstrumentationName(libraryName),
 			metric.WithDescription("The total number of incoming grpc requests (server-side)"),
 		),
 		active: mm.NewInt64UpDownCounter(
 			"incoming_grpc_requests_active",
 			metric.WithUnit(unit.Dimensionless),
-			metric.WithInstrumentationName(libraryName),
 			metric.WithDescription("The number of in-flight incoming grpc requests (server-side)"),
 		),
 		latency: mm.NewInt64Histogram(
 			"incoming_grpc_requests_latency",
 			metric.WithUnit(unit.Milliseconds),
-			metric.WithInstrumentationName(libraryName),
 			metric.WithDescription("The duration of incoming grpc requests in milliseconds (server-side)"),
 		),
 	}

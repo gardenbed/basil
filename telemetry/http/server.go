@@ -31,25 +31,21 @@ func newServerInstruments(meter metric.Meter) *serverInstruments {
 		panic: mm.NewInt64Counter(
 			"incoming_http_requests_panic",
 			metric.WithUnit(unit.Dimensionless),
-			metric.WithInstrumentationName(libraryName),
 			metric.WithDescription("The total number of panics happened in http handlers (server-side)"),
 		),
 		total: mm.NewInt64Counter(
 			"incoming_http_requests_total",
 			metric.WithUnit(unit.Dimensionless),
-			metric.WithInstrumentationName(libraryName),
 			metric.WithDescription("The total number of incoming http requests (server-side)"),
 		),
 		active: mm.NewInt64UpDownCounter(
 			"incoming_http_requests_active",
 			metric.WithUnit(unit.Dimensionless),
-			metric.WithInstrumentationName(libraryName),
 			metric.WithDescription("The number of in-flight incoming http requests (server-side)"),
 		),
 		latency: mm.NewInt64Histogram(
 			"incoming_http_requests_latency",
 			metric.WithUnit(unit.Milliseconds),
-			metric.WithInstrumentationName(libraryName),
 			metric.WithDescription("The duration of incoming http requests in milliseconds (server-side)"),
 		),
 	}

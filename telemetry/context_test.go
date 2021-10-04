@@ -150,7 +150,7 @@ func TestMeterFromContext(t *testing.T) {
 		{
 			name:          "SingletonMeter",
 			ctx:           context.Background(),
-			expectedMeter: new(metric.NoopMeterProvider).Meter(""),
+			expectedMeter: metric.NewNoopMeterProvider().Meter(""),
 		},
 		{
 			name:          "CustomMeter",

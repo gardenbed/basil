@@ -8,7 +8,6 @@ import (
 )
 
 const (
-	libraryName       = "github.com/basil/telemetry/http"
 	requestUUIDHeader = "Request-UUID"
 	clientNameHeader  = "Client-Name"
 )
