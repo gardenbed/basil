@@ -18,6 +18,6 @@ func Get() Probe {
 }
 
 // Set sets the singleton probe.
-func Set(o Probe) {
-	singleton = o
+func Set(p Probe) {
+	singleton = p
 }
