@@ -2,6 +2,7 @@
 package httpx
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -50,9 +51,28 @@ type ClientError struct {
 func NewClientError(resp *http.Response) *ClientError {
 	var message string
 	if resp.Body != nil {
-		if b, e := ioutil.ReadAll(resp.Body); e == nil {
-			message = fmt.Sprintf("%s %s %d: %s", resp.Request.Method, resp.Request.URL.Path, resp.StatusCode, string(b))
+		respBody := new(struct {
+			Error   string `json:"error"`
+			Message string `json:"message"`
+		})
+
+		if b, err := ioutil.ReadAll(resp.Body); err == nil {
+			_ = json.Unmarshal(b, respBody)
+			switch {
+			case respBody.Error != "":
+				message = respBody.Error
+			case respBody.Message != "":
+				message = respBody.Message
+			default:
+				message = string(b)
+			}
 		}
+	}
+
+	if message == "" {
+		message = fmt.Sprintf("%s %s %d", resp.Request.Method, resp.Request.URL.Path, resp.StatusCode)
+	} else {
+		message = fmt.Sprintf("%s %s %d: %s", resp.Request.Method, resp.Request.URL.Path, resp.StatusCode, message)
 	}
 
 	return &ClientError{
