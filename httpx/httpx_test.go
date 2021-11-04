@@ -92,7 +92,47 @@ func TestNewClientError(t *testing.T) {
 		expectedStatusCode int
 	}{
 		{
-			name: "OK",
+			name: "NilBody",
+			resp: &http.Response{
+				StatusCode: 500,
+				Body:       nil,
+				Request:    req,
+			},
+			expectedError:      "GET /item 500",
+			expectedStatusCode: 500,
+		},
+		{
+			name: "EmptyBody",
+			resp: &http.Response{
+				StatusCode: 500,
+				Body:       ioutil.NopCloser(strings.NewReader("")),
+				Request:    req,
+			},
+			expectedError:      "GET /item 500",
+			expectedStatusCode: 500,
+		},
+		{
+			name: "OK_JSONBody_Error",
+			resp: &http.Response{
+				StatusCode: 500,
+				Body:       ioutil.NopCloser(strings.NewReader(`{"error":"internal server error"}`)),
+				Request:    req,
+			},
+			expectedError:      "GET /item 500: internal server error",
+			expectedStatusCode: 500,
+		},
+		{
+			name: "OK_JSONBody_Message",
+			resp: &http.Response{
+				StatusCode: 500,
+				Body:       ioutil.NopCloser(strings.NewReader(`{"message":"internal server error"}`)),
+				Request:    req,
+			},
+			expectedError:      "GET /item 500: internal server error",
+			expectedStatusCode: 500,
+		},
+		{
+			name: "OK_TextBody",
 			resp: &http.Response{
 				StatusCode: 500,
 				Body:       ioutil.NopCloser(strings.NewReader("internal server error")),
