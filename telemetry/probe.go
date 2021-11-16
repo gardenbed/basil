@@ -18,6 +18,7 @@ import (
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/export/metric/aggregation"
 	"go.opentelemetry.io/otel/sdk/metric/aggregator/histogram"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/trace"
@@ -27,7 +28,6 @@ import (
 	promcollector "github.com/prometheus/client_golang/prometheus/collectors"
 	jaegerexporter "go.opentelemetry.io/otel/exporters/jaeger"
 	promexporter "go.opentelemetry.io/otel/exporters/prometheus"
-	metricexport "go.opentelemetry.io/otel/sdk/export/metric"
 	controller "go.opentelemetry.io/otel/sdk/metric/controller/basic"
 	processor "go.opentelemetry.io/otel/sdk/metric/processor/basic"
 	simpleselector "go.opentelemetry.io/otel/sdk/metric/selector/simple"
@@ -264,7 +264,7 @@ func createPrometheus(o options) (metric.Meter, http.Handler) {
 
 	checkpointerFactory := processor.NewFactory(
 		aggregator,
-		metricexport.CumulativeExportKindSelector(),
+		aggregation.CumulativeTemporalitySelector(),
 		processor.WithMemory(true),
 	)
 
