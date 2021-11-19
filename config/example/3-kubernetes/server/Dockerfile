@@ -4,7 +4,7 @@ WORKDIR /repo
 COPY . .
 RUN go build
 
-FROM alpine:3.14
+FROM alpine:3.15
 EXPOSE 8080
 COPY --from=builder /repo/server /usr/local/bin/
 RUN chown -R nobody:nogroup /usr/local/bin/server
