@@ -344,7 +344,9 @@ func createOpenTelemetry(o options) (metric.Meter, trace.Tracer, closeFunc) {
 		panic(err)
 	}
 
-	aggregator := simpleselector.NewWithExactDistribution()
+	aggregator := simpleselector.NewWithHistogramDistribution(
+		histogram.WithExplicitBoundaries(defaultBuckets),
+	)
 
 	checkpointerFactory := processor.NewFactory(
 		aggregator,
