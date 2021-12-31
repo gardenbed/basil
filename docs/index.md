@@ -1,6 +1,6 @@
 # Basil
 
-Basil is a complete application framework for Go.
+Basil is a monorepo application framework for Go.
 
 ## Libraries
 
