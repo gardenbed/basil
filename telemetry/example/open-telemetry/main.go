@@ -9,19 +9,23 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/metric/instrument"
+	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
+	"go.opentelemetry.io/otel/metric/instrument/syncint64"
 )
 
 type instruments struct {
-	reqCounter  metric.Int64Counter
-	reqDuration metric.Float64Histogram
+	reqCounter  syncint64.Counter
+	reqDuration syncfloat64.Histogram
 }
 
-func newInstruments(meter metric.Meter) *instruments {
-	mm := metric.Must(meter)
+func newInstruments(m metric.Meter) *instruments {
+	reqCounter, _ := m.SyncInt64().Counter("requests_total", instrument.WithDescription("the total number of requests"))
+	reqDuration, _ := m.SyncFloat64().Histogram("request_duration_seconds", instrument.WithDescription("the duration of requests in seconds"))
 
 	return &instruments{
-		reqCounter:  mm.NewInt64Counter("requests_total", metric.WithDescription("the total number of requests")),
-		reqDuration: mm.NewFloat64Histogram("request_duration_seconds", metric.WithDescription("the duration of requests in seconds")),
+		reqCounter:  reqCounter,
+		reqDuration: reqDuration,
 	}
 }
 
@@ -40,17 +44,15 @@ func (s *server) Handle(ctx context.Context) {
 	s.respond(ctx)
 	duration := time.Since(start)
 
-	labels := []attribute.KeyValue{
+	attrs := []attribute.KeyValue{
 		attribute.String("method", "GET"),
 		attribute.String("endpoint", "/user"),
 		attribute.Int("statusCode", 200),
 	}
 
 	// Metrics
-	s.probe.Meter().RecordBatch(ctx, labels,
-		s.instruments.reqCounter.Measurement(1),
-		s.instruments.reqDuration.Measurement(duration.Seconds()),
-	)
+	s.instruments.reqCounter.Add(ctx, 1, attrs...)
+	s.instruments.reqDuration.Record(ctx, duration.Seconds(), attrs...)
 
 	// Logging
 	s.probe.Logger().Info("request handled successfully.",

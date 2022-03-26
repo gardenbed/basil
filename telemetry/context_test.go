@@ -7,6 +7,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/global"
+	"go.opentelemetry.io/otel/metric/nonrecording"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/stretchr/testify/assert"
@@ -117,7 +118,6 @@ func TestLoggerFromContext(t *testing.T) {
 }
 
 func TestContextWithMeter(t *testing.T) {
-
 	tests := []struct {
 		name  string
 		ctx   context.Context
@@ -126,7 +126,7 @@ func TestContextWithMeter(t *testing.T) {
 		{
 			name:  "OK",
 			ctx:   context.Background(),
-			meter: global.Meter(""),
+			meter: global.MeterProvider().Meter(""),
 		},
 	}
 
@@ -140,7 +140,7 @@ func TestContextWithMeter(t *testing.T) {
 }
 
 func TestMeterFromContext(t *testing.T) {
-	meter := global.Meter("")
+	meter := global.MeterProvider().Meter("")
 
 	tests := []struct {
 		name          string
@@ -150,7 +150,7 @@ func TestMeterFromContext(t *testing.T) {
 		{
 			name:          "SingletonMeter",
 			ctx:           context.Background(),
-			expectedMeter: metric.NewNoopMeterProvider().Meter(""),
+			expectedMeter: nonrecording.NewNoopMeter(),
 		},
 		{
 			name:          "CustomMeter",

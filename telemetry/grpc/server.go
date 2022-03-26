@@ -10,6 +10,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/metric/instrument"
+	"go.opentelemetry.io/otel/metric/instrument/syncint64"
 	"go.opentelemetry.io/otel/metric/unit"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
@@ -21,36 +23,42 @@ import (
 
 // Server-side instruments for measurements.
 type serverInstruments struct {
-	panic   metric.Int64Counter
-	total   metric.Int64Counter
-	active  metric.Int64UpDownCounter
-	latency metric.Int64Histogram
+	panic   syncint64.Counter
+	total   syncint64.Counter
+	active  syncint64.UpDownCounter
+	latency syncint64.Histogram
 }
 
-func newServerInstruments(meter metric.Meter) *serverInstruments {
-	mm := metric.Must(meter)
+func newServerInstruments(m metric.Meter) *serverInstruments {
+	panic, _ := m.SyncInt64().Counter(
+		"incoming_grpc_requests_panic",
+		instrument.WithUnit(unit.Dimensionless),
+		instrument.WithDescription("The total number of panics happened in grpc handlers (server-side)"),
+	)
+
+	total, _ := m.SyncInt64().Counter(
+		"incoming_grpc_requests_total",
+		instrument.WithUnit(unit.Dimensionless),
+		instrument.WithDescription("The total number of incoming grpc requests (server-side)"),
+	)
+
+	active, _ := m.SyncInt64().UpDownCounter(
+		"incoming_grpc_requests_active",
+		instrument.WithUnit(unit.Dimensionless),
+		instrument.WithDescription("The number of in-flight incoming grpc requests (server-side)"),
+	)
+
+	latency, _ := m.SyncInt64().Histogram(
+		"incoming_grpc_requests_latency",
+		instrument.WithUnit(unit.Milliseconds),
+		instrument.WithDescription("The duration of incoming grpc requests in milliseconds (server-side)"),
+	)
 
 	return &serverInstruments{
-		panic: mm.NewInt64Counter(
-			"incoming_grpc_requests_panic",
-			metric.WithUnit(unit.Dimensionless),
-			metric.WithDescription("The total number of panics happened in grpc handlers (server-side)"),
-		),
-		total: mm.NewInt64Counter(
-			"incoming_grpc_requests_total",
-			metric.WithUnit(unit.Dimensionless),
-			metric.WithDescription("The total number of incoming grpc requests (server-side)"),
-		),
-		active: mm.NewInt64UpDownCounter(
-			"incoming_grpc_requests_active",
-			metric.WithUnit(unit.Dimensionless),
-			metric.WithDescription("The number of in-flight incoming grpc requests (server-side)"),
-		),
-		latency: mm.NewInt64Histogram(
-			"incoming_grpc_requests_latency",
-			metric.WithUnit(unit.Milliseconds),
-			metric.WithDescription("The duration of incoming grpc requests in milliseconds (server-side)"),
-		),
+		panic:   panic,
+		total:   total,
+		active:  active,
+		latency: latency,
 	}
 }
 
@@ -118,21 +126,14 @@ func (i *ServerInterceptor) unaryInterceptor(ctx context.Context, req interface{
 		}
 	}
 
-	// Increase the number of in-flight requests
-	i.instruments.active.Add(ctx, 1,
-		attribute.String("package", e.Package),
-		attribute.String("service", e.Service),
-		attribute.String("method", e.Method),
-		attribute.Bool("stream", stream),
-	)
+	packageAttr := attribute.String("package", e.Package)
+	serviceAttr := attribute.String("service", e.Service)
+	methodAttr := attribute.String("method", e.Method)
+	streamAttr := attribute.Bool("stream", stream)
 
-	// Make sure we decrease the number of in-flight requests
-	defer i.instruments.active.Add(ctx, -1,
-		attribute.String("package", e.Package),
-		attribute.String("service", e.Service),
-		attribute.String("method", e.Method),
-		attribute.Bool("stream", stream),
-	)
+	// Handle the number of in-flight requests
+	i.instruments.active.Add(ctx, 1, packageAttr, serviceAttr, methodAttr, streamAttr)
+	defer i.instruments.active.Add(ctx, -1, packageAttr, serviceAttr, methodAttr, streamAttr)
 
 	// Get grpc request metadata
 	md, ok := metadata.FromIncomingContext(ctx)
@@ -206,17 +207,9 @@ func (i *ServerInterceptor) unaryInterceptor(ctx context.Context, req interface{
 	success := err == nil
 
 	// Report metrics
-	meter.RecordBatch(ctx,
-		[]attribute.KeyValue{
-			attribute.String("package", e.Package),
-			attribute.String("service", e.Service),
-			attribute.String("method", e.Method),
-			attribute.Bool("stream", stream),
-			attribute.Bool("success", success),
-		},
-		i.instruments.total.Measurement(1),
-		i.instruments.latency.Measurement(duration),
-	)
+	successAttr := attribute.Bool("success", success)
+	i.instruments.total.Add(ctx, 1, packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
+	i.instruments.latency.Record(ctx, duration, packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
 
 	// Report logs
 	message := fmt.Sprintf("%s %s %dms", kind, e, duration)
@@ -236,13 +229,7 @@ func (i *ServerInterceptor) unaryInterceptor(ctx context.Context, req interface{
 	}
 
 	// Report the span
-	span.SetAttributes(
-		attribute.String("package", e.Package),
-		attribute.String("service", e.Service),
-		attribute.String("method", e.Method),
-		attribute.Bool("stream", stream),
-		attribute.Bool("success", success),
-	)
+	span.SetAttributes(packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
 	if err != nil {
 		code := codes.Code(status.Code(err))
 		span.SetStatus(code, err.Error())
@@ -287,21 +274,14 @@ func (i *ServerInterceptor) streamInterceptor(srv interface{}, ss grpc.ServerStr
 		}
 	}
 
-	// Increase the number of in-flight requests
-	i.instruments.active.Add(ctx, 1,
-		attribute.String("package", e.Package),
-		attribute.String("service", e.Service),
-		attribute.String("method", e.Method),
-		attribute.Bool("stream", stream),
-	)
+	packageAttr := attribute.String("package", e.Package)
+	serviceAttr := attribute.String("service", e.Service)
+	methodAttr := attribute.String("method", e.Method)
+	streamAttr := attribute.Bool("stream", stream)
 
-	// Make sure we decrease the number of in-flight requests
-	defer i.instruments.active.Add(ctx, -1,
-		attribute.String("package", e.Package),
-		attribute.String("service", e.Service),
-		attribute.String("method", e.Method),
-		attribute.Bool("stream", stream),
-	)
+	// Handle the number of in-flight requests
+	i.instruments.active.Add(ctx, 1, packageAttr, serviceAttr, methodAttr, streamAttr)
+	defer i.instruments.active.Add(ctx, -1, packageAttr, serviceAttr, methodAttr, streamAttr)
 
 	// Get grpc request metadata (an incoming grpc request context is guaranteed to have metadata)
 	md, _ := metadata.FromIncomingContext(ctx)
@@ -372,17 +352,9 @@ func (i *ServerInterceptor) streamInterceptor(srv interface{}, ss grpc.ServerStr
 	success := err == nil
 
 	// Report metrics
-	meter.RecordBatch(ctx,
-		[]attribute.KeyValue{
-			attribute.String("package", e.Package),
-			attribute.String("service", e.Service),
-			attribute.String("method", e.Method),
-			attribute.Bool("stream", stream),
-			attribute.Bool("success", success),
-		},
-		i.instruments.total.Measurement(1),
-		i.instruments.latency.Measurement(duration),
-	)
+	successAttr := attribute.Bool("success", success)
+	i.instruments.total.Add(ctx, 1, packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
+	i.instruments.latency.Record(ctx, duration, packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
 
 	// Report logs
 	message := fmt.Sprintf("%s %s %dms", kind, e, duration)
@@ -402,13 +374,7 @@ func (i *ServerInterceptor) streamInterceptor(srv interface{}, ss grpc.ServerStr
 	}
 
 	// Report the span
-	span.SetAttributes(
-		attribute.String("package", e.Package),
-		attribute.String("service", e.Service),
-		attribute.String("method", e.Method),
-		attribute.Bool("stream", stream),
-		attribute.Bool("success", success),
-	)
+	span.SetAttributes(packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
 	if err != nil {
 		code := codes.Code(status.Code(err))
 		span.SetStatus(code, err.Error())

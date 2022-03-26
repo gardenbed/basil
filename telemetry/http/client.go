@@ -12,6 +12,8 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/metric/instrument"
+	"go.opentelemetry.io/otel/metric/instrument/syncint64"
 	"go.opentelemetry.io/otel/metric/unit"
 	"go.opentelemetry.io/otel/trace"
 
@@ -20,30 +22,34 @@ import (
 
 // Client-side instruments for measurements.
 type clientInstruments struct {
-	total   metric.Int64Counter
-	active  metric.Int64UpDownCounter
-	latency metric.Int64Histogram
+	total   syncint64.Counter
+	active  syncint64.UpDownCounter
+	latency syncint64.Histogram
 }
 
-func newClientInstruments(meter metric.Meter) *clientInstruments {
-	mm := metric.Must(meter)
+func newClientInstruments(m metric.Meter) *clientInstruments {
+	total, _ := m.SyncInt64().Counter(
+		"outgoing_http_requests_total",
+		instrument.WithUnit(unit.Dimensionless),
+		instrument.WithDescription("The total number of outgoing http requests (client-side)"),
+	)
+
+	active, _ := m.SyncInt64().UpDownCounter(
+		"outgoing_http_requests_active",
+		instrument.WithUnit(unit.Dimensionless),
+		instrument.WithDescription("The number of in-flight outgoing http requests (client-side)"),
+	)
+
+	latency, _ := m.SyncInt64().Histogram(
+		"outgoing_http_requests_latency",
+		instrument.WithUnit(unit.Milliseconds),
+		instrument.WithDescription("The duration of outgoing http requests in milliseconds (client-side)"),
+	)
 
 	return &clientInstruments{
-		total: mm.NewInt64Counter(
-			"outgoing_http_requests_total",
-			metric.WithUnit(unit.Dimensionless),
-			metric.WithDescription("The total number of outgoing http requests (client-side)"),
-		),
-		active: mm.NewInt64UpDownCounter(
-			"outgoing_http_requests_active",
-			metric.WithUnit(unit.Dimensionless),
-			metric.WithDescription("The number of in-flight outgoing http requests (client-side)"),
-		),
-		latency: mm.NewInt64Histogram(
-			"outgoing_http_requests_latency",
-			metric.WithUnit(unit.Milliseconds),
-			metric.WithDescription("The duration of outgoing http requests in milliseconds (client-side)"),
-		),
+		total:   total,
+		active:  active,
+		latency: latency,
 	}
 }
 
@@ -130,20 +136,14 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	url := req.URL.Path
 	route := c.opts.IDRegexp.ReplaceAllString(url, ":id")
 
-	meter := c.probe.Meter()
 	tracer := c.probe.Tracer()
 
-	// Increase the number of in-flight requests
-	c.instruments.active.Add(ctx, 1,
-		attribute.String("method", method),
-		attribute.String("route", route),
-	)
+	methodAttr := attribute.String("method", method)
+	routeAttr := attribute.String("route", route)
 
-	// Make sure we decrease the number of in-flight requests
-	defer c.instruments.active.Add(ctx, -1,
-		attribute.String("method", method),
-		attribute.String("route", route),
-	)
+	// Handle the number of in-flight requests
+	c.instruments.active.Add(ctx, 1, methodAttr, routeAttr)
+	defer c.instruments.active.Add(ctx, -1, methodAttr, routeAttr)
 
 	// Make sure the request has a UUID
 	requestUUID, ok := telemetry.UUIDFromContext(ctx)
@@ -182,16 +182,10 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	}
 
 	// Report metrics
-	meter.RecordBatch(ctx,
-		[]attribute.KeyValue{
-			attribute.String("method", method),
-			attribute.String("route", route),
-			attribute.Int("status_code", statusCode),
-			attribute.String("status_class", statusClass),
-		},
-		c.instruments.total.Measurement(1),
-		c.instruments.latency.Measurement(duration),
-	)
+	statusCodeAttr := attribute.Int("status_code", statusCode)
+	statusClassAttr := attribute.String("status_class", statusClass)
+	c.instruments.total.Add(ctx, 1, methodAttr, routeAttr, statusCodeAttr, statusClassAttr)
+	c.instruments.latency.Record(ctx, duration, methodAttr, routeAttr, statusCodeAttr, statusClassAttr)
 
 	// Report logs
 	logger := c.probe.Logger()
@@ -222,11 +216,8 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	}
 
 	// Report the span
-	span.SetAttributes(
-		attribute.String("method", method),
+	span.SetAttributes(methodAttr, routeAttr, statusCodeAttr,
 		attribute.String("url", url),
-		attribute.String("route", route),
-		attribute.Int("status_code", statusCode),
 	)
 
 	return resp, err
