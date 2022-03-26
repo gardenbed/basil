@@ -62,7 +62,7 @@ func TestProbe_Meter(t *testing.T) {
 		{
 			name: "OK",
 			probe: &probe{
-				meter: global.Meter(""),
+				meter: global.MeterProvider().Meter(""),
 			},
 		},
 	}
