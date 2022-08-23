@@ -17,7 +17,6 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/global"
-	"go.opentelemetry.io/otel/metric/nonrecording"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/export/metric/aggregation"
 	"go.opentelemetry.io/otel/sdk/metric/aggregator/histogram"
@@ -100,7 +99,7 @@ func (p *probe) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func NewVoidProbe() Probe {
 	return &probe{
 		logger: new(voidLogger),
-		meter:  nonrecording.NewNoopMeter(),
+		meter:  metric.NewNoopMeter(),
 		tracer: trace.NewNoopTracerProvider().Tracer(""),
 	}
 }
@@ -145,7 +144,7 @@ func NewProbe(opts ...Option) Probe {
 	}
 
 	if p.meter == nil {
-		p.meter = nonrecording.NewNoopMeter()
+		p.meter = metric.NewNoopMeter()
 	}
 
 	if p.tracer == nil {
