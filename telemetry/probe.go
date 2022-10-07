@@ -18,26 +18,18 @@ import (
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/propagation"
-	"go.opentelemetry.io/otel/sdk/export/metric/aggregation"
-	"go.opentelemetry.io/otel/sdk/metric/aggregator/histogram"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/trace"
 
 	multierror "github.com/hashicorp/go-multierror"
 	prom "github.com/prometheus/client_golang/prometheus"
 	promcollector "github.com/prometheus/client_golang/prometheus/collectors"
+	promhttp "github.com/prometheus/client_golang/prometheus/promhttp"
 	jaegerexporter "go.opentelemetry.io/otel/exporters/jaeger"
 	promexporter "go.opentelemetry.io/otel/exporters/prometheus"
-	controller "go.opentelemetry.io/otel/sdk/metric/controller/basic"
-	processor "go.opentelemetry.io/otel/sdk/metric/processor/basic"
-	simpleselector "go.opentelemetry.io/otel/sdk/metric/selector/simple"
+	metricsdk "go.opentelemetry.io/otel/sdk/metric"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
-)
-
-var (
-	defaultBuckets = []float64{0.01, 0.10, 0.50, 1.00, 5.00}
-	// defaultPercentiles = []float64{0.10, 0.50, 0.90, 0.95, 0.99}
 )
 
 // Probe encompasses a logger, meter, and tracer.
@@ -241,6 +233,15 @@ func createLogger(o options) (Logger, closeFunc) {
 func createPrometheus(o options) (metric.Meter, http.Handler) {
 	resource := createResource(o)
 
+	exporter := promexporter.New()
+	provider := metricsdk.NewMeterProvider(
+		metricsdk.WithReader(exporter),
+		metricsdk.WithResource(resource),
+	)
+
+	global.SetMeterProvider(provider)
+	meter := provider.Meter(o.name)
+
 	// Create a new Prometheus registry
 	registry := prom.NewRegistry()
 	registry.MustRegister(promcollector.NewGoCollector())
@@ -250,39 +251,9 @@ func createPrometheus(o options) (metric.Meter, http.Handler) {
 		},
 	))
 
-	config := promexporter.Config{
-		Registerer:                 registry,
-		Gatherer:                   registry,
-		DefaultHistogramBoundaries: defaultBuckets,
-	}
+	handler := promhttp.HandlerFor(registry, promhttp.HandlerOpts{})
 
-	aggregator := simpleselector.NewWithHistogramDistribution(
-		histogram.WithExplicitBoundaries(
-			config.DefaultHistogramBoundaries,
-		),
-	)
-
-	checkpointerFactory := processor.NewFactory(
-		aggregator,
-		aggregation.CumulativeTemporalitySelector(),
-		processor.WithMemory(true),
-	)
-
-	ctrl := controller.New(
-		checkpointerFactory,
-		controller.WithResource(resource),
-	)
-
-	exporter, err := promexporter.New(config, ctrl)
-	if err != nil {
-		panic(err)
-	}
-
-	provider := exporter.MeterProvider()
-	global.SetMeterProvider(provider)
-	meter := provider.Meter(o.name)
-
-	return meter, exporter
+	return meter, handler
 }
 
 func createJaeger(o options) (trace.Tracer, closeFunc) {
@@ -344,24 +315,12 @@ func createOpenTelemetry(o options) (metric.Meter, trace.Tracer, closeFunc) {
 		panic(err)
 	}
 
-	aggregator := simpleselector.NewWithHistogramDistribution(
-		histogram.WithExplicitBoundaries(defaultBuckets),
+	meterProvider := metricsdk.NewMeterProvider(
+		metricsdk.WithReader(
+			metricsdk.NewPeriodicReader(metricExporter),
+		),
+		metricsdk.WithResource(resource),
 	)
-
-	checkpointerFactory := processor.NewFactory(
-		aggregator,
-		metricExporter,
-		processor.WithMemory(true),
-	)
-
-	ctrl := controller.New(
-		checkpointerFactory,
-		controller.WithResource(resource),
-		controller.WithExporter(metricExporter),
-		controller.WithCollectPeriod(2*time.Second),
-	)
-
-	var meterProvider metric.MeterProvider = ctrl
 
 	// ====================> Trace Provider <====================
 
@@ -396,20 +355,16 @@ func createOpenTelemetry(o options) (metric.Meter, trace.Tracer, closeFunc) {
 	otel.SetTracerProvider(traceProvider)
 	otel.SetTextMapPropagator(propagation.TraceContext{})
 
-	if err := ctrl.Start(ctx); err != nil {
-		panic(err)
-	}
-
 	meter := meterProvider.Meter(o.name)
 	tracer := traceProvider.Tracer(o.name)
 
 	close := func(ctx context.Context) error {
 		g := new(errgroup.Group)
 		g.Go(func() error {
-			return traceProvider.Shutdown(ctx)
+			return meterProvider.Shutdown(ctx)
 		})
 		g.Go(func() error {
-			return ctrl.Stop(ctx)
+			return traceProvider.Shutdown(ctx)
 		})
 		return g.Wait()
 	}
