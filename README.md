@@ -5,7 +5,7 @@
 
 # Basil 🌿
 
-Basil is a monorepo application framework for Go.
+Basil is a monorepo application framework for building service-oriented applications in Go.
 
 ## Why?
 
