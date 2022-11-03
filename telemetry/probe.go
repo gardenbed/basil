@@ -233,7 +233,11 @@ func createLogger(o options) (Logger, closeFunc) {
 func createPrometheus(o options) (metric.Meter, http.Handler) {
 	resource := createResource(o)
 
-	exporter := promexporter.New()
+	exporter, err := promexporter.New()
+	if err != nil {
+		panic(err)
+	}
+
 	provider := metricsdk.NewMeterProvider(
 		metricsdk.WithReader(exporter),
 		metricsdk.WithResource(resource),
