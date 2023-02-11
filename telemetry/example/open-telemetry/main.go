@@ -10,18 +10,16 @@ import (
 	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/instrument"
-	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
-	"go.opentelemetry.io/otel/metric/instrument/syncint64"
 )
 
 type instruments struct {
-	reqCounter  syncint64.Counter
-	reqDuration syncfloat64.Histogram
+	reqCounter  instrument.Int64Counter
+	reqDuration instrument.Float64Histogram
 }
 
 func newInstruments(m metric.Meter) *instruments {
-	reqCounter, _ := m.SyncInt64().Counter("requests_total", instrument.WithDescription("the total number of requests"))
-	reqDuration, _ := m.SyncFloat64().Histogram("request_duration_seconds", instrument.WithDescription("the duration of requests in seconds"))
+	reqCounter, _ := m.Int64Counter("requests_total", instrument.WithDescription("the total number of requests"))
+	reqDuration, _ := m.Float64Histogram("request_duration_seconds", instrument.WithDescription("the duration of requests in seconds"))
 
 	return &instruments{
 		reqCounter:  reqCounter,
