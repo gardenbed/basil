@@ -2,7 +2,7 @@ package httpx
 
 import (
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -44,7 +44,7 @@ func TestError(t *testing.T) {
 			Error(rec, tc.err, tc.defaultStatusCode)
 
 			res := rec.Result()
-			b, err := ioutil.ReadAll(res.Body)
+			b, err := io.ReadAll(res.Body)
 			assert.NoError(t, err)
 			body := string(b)
 
@@ -105,7 +105,7 @@ func TestNewClientError(t *testing.T) {
 			name: "EmptyBody",
 			resp: &http.Response{
 				StatusCode: 500,
-				Body:       ioutil.NopCloser(strings.NewReader("")),
+				Body:       io.NopCloser(strings.NewReader("")),
 				Request:    req,
 			},
 			expectedError:      "GET /item 500",
@@ -115,7 +115,7 @@ func TestNewClientError(t *testing.T) {
 			name: "OK_JSONBody_Error",
 			resp: &http.Response{
 				StatusCode: 500,
-				Body:       ioutil.NopCloser(strings.NewReader(`{"error":"internal server error"}`)),
+				Body:       io.NopCloser(strings.NewReader(`{"error":"internal server error"}`)),
 				Request:    req,
 			},
 			expectedError:      "GET /item 500: internal server error",
@@ -125,7 +125,7 @@ func TestNewClientError(t *testing.T) {
 			name: "OK_JSONBody_Message",
 			resp: &http.Response{
 				StatusCode: 500,
-				Body:       ioutil.NopCloser(strings.NewReader(`{"message":"internal server error"}`)),
+				Body:       io.NopCloser(strings.NewReader(`{"message":"internal server error"}`)),
 				Request:    req,
 			},
 			expectedError:      "GET /item 500: internal server error",
@@ -135,7 +135,7 @@ func TestNewClientError(t *testing.T) {
 			name: "OK_TextBody",
 			resp: &http.Response{
 				StatusCode: 500,
-				Body:       ioutil.NopCloser(strings.NewReader("internal server error")),
+				Body:       io.NopCloser(strings.NewReader("internal server error")),
 				Request:    req,
 			},
 			expectedError:      "GET /item 500: internal server error",

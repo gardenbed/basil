@@ -2,7 +2,6 @@ package config
 
 import (
 	"flag"
-	"io/ioutil"
 	"os"
 	"reflect"
 	"testing"
@@ -654,7 +653,7 @@ func TestReaderGetFieldValue(t *testing.T) {
 
 			// Write value in a temporary config file
 
-			tmpfile, err := ioutil.TempFile("", "gotest_")
+			tmpfile, err := os.CreateTemp("", "gotest_")
 			assert.NoError(t, err)
 			defer os.Remove(tmpfile.Name())
 
@@ -1065,7 +1064,7 @@ func TestReadFields(t *testing.T) {
 
 			// Write configuration files
 			for _, f := range tc.files {
-				tmpfile, err := ioutil.TempFile("", "gotest_")
+				tmpfile, err := os.CreateTemp("", "gotest_")
 				assert.NoError(t, err)
 				defer os.Remove(tmpfile.Name())
 

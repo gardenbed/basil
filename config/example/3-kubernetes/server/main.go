@@ -48,5 +48,5 @@ func main() {
 
 	// Starting the HTTP server
 	logger.Infof("starting http server ...")
-	http.ListenAndServe(":8080", nil)
+	_ = http.ListenAndServe(":8080", nil)
 }

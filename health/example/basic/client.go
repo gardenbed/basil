@@ -7,8 +7,7 @@ import (
 
 // Client is a mock client implementing health.Checker interface.
 type Client struct {
-	count int
-	name  string
+	name string
 }
 
 // NewClient creates a new client.
