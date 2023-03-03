@@ -11,8 +11,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/instrument"
-	"go.opentelemetry.io/otel/metric/instrument/syncint64"
-	"go.opentelemetry.io/otel/metric/unit"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/gardenbed/basil/telemetry"
@@ -20,34 +18,31 @@ import (
 
 // Server-side instruments for measurements.
 type serverInstruments struct {
-	panic   syncint64.Counter
-	total   syncint64.Counter
-	active  syncint64.UpDownCounter
-	latency syncint64.Histogram
+	panic   instrument.Int64Counter
+	total   instrument.Int64Counter
+	active  instrument.Int64UpDownCounter
+	latency instrument.Int64Histogram
 }
 
 func newServerInstruments(m metric.Meter) *serverInstruments {
-	panic, _ := m.SyncInt64().Counter(
+	panic, _ := m.Int64Counter(
 		"incoming_http_requests_panic",
-		instrument.WithUnit(unit.Dimensionless),
 		instrument.WithDescription("The total number of panics happened in http handlers (server-side)"),
 	)
 
-	total, _ := m.SyncInt64().Counter(
+	total, _ := m.Int64Counter(
 		"incoming_http_requests_total",
-		instrument.WithUnit(unit.Dimensionless),
 		instrument.WithDescription("The total number of incoming http requests (server-side)"),
 	)
 
-	active, _ := m.SyncInt64().UpDownCounter(
+	active, _ := m.Int64UpDownCounter(
 		"incoming_http_requests_active",
-		instrument.WithUnit(unit.Dimensionless),
 		instrument.WithDescription("The number of in-flight incoming http requests (server-side)"),
 	)
 
-	latency, _ := m.SyncInt64().Histogram(
+	latency, _ := m.Int64Histogram(
 		"incoming_http_requests_latency",
-		instrument.WithUnit(unit.Milliseconds),
+		instrument.WithUnit("ms"),
 		instrument.WithDescription("The duration of incoming http requests in milliseconds (server-side)"),
 	)
 
