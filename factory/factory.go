@@ -21,21 +21,23 @@ const (
 )
 
 var (
+	rnd   *rand.Rand
 	chars = []byte("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 )
 
 // init function will be only called once in runtime regardless of how many times the package is imported.
 func init() {
-	rand.Seed(time.Now().UnixNano())
+	src := rand.NewSource(time.Now().UnixNano())
+	rnd = rand.New(src)
 }
 
 // randInRange returns a non-negative pseudo-random number in the closed interval [min,max] from the default Source.
 func randInRange(min, max int) int {
-	return min + rand.Intn(max-min+1)
+	return min + rnd.Intn(max-min+1)
 }
 
 func randPick(args ...string) string {
-	i := rand.Intn(len(args))
+	i := rnd.Intn(len(args))
 	return args[i]
 }
 
@@ -48,9 +50,9 @@ func String() string {
 	// val is a randomly generated value.
 	// count keeps track of how many more character indicies left in the current val.
 	// l keeps track of the current length of the generated string.
-	for val, count, ln := rand.Int63(), indexMax, 0; ln < n; {
+	for val, count, ln := rnd.Int63(), indexMax, 0; ln < n; {
 		if count == 0 {
-			val, count = rand.Int63(), indexMax
+			val, count = rnd.Int63(), indexMax
 		}
 
 		if i := int(val & indexMask); i < len(chars) {
@@ -83,7 +85,7 @@ func StringSlice() []string {
 
 // Bool generates a random bool value.
 func Bool() bool {
-	return rand.Intn(2) == 1
+	return rnd.Intn(2) == 1
 }
 
 // BoolPtr generates a random bool value and returns the pointer to it.
@@ -104,7 +106,7 @@ func BoolSlice() []bool {
 
 // Int generates a random int value.
 func Int() int {
-	return int(rand.Int63())
+	return int(rnd.Int63())
 }
 
 // IntPtr generates a random int value and returns the pointer to it.
@@ -125,7 +127,7 @@ func IntSlice() []int {
 
 // Int8 generates a random int8 value.
 func Int8() int8 {
-	return int8(rand.Int63())
+	return int8(rnd.Int63())
 }
 
 // Int8Ptr generates a random int8 value and returns the pointer to it.
@@ -146,7 +148,7 @@ func Int8Slice() []int8 {
 
 // Int16 generates a random int16 value.
 func Int16() int16 {
-	return int16(rand.Int63())
+	return int16(rnd.Int63())
 }
 
 // Int16Ptr generates a random int16 value and returns the pointer to it.
@@ -167,7 +169,7 @@ func Int16Slice() []int16 {
 
 // Int32 generates a random int32 value.
 func Int32() int32 {
-	return int32(rand.Int63())
+	return int32(rnd.Int63())
 }
 
 // Int32Ptr generates a random int32 value and returns the pointer to it.
@@ -188,7 +190,7 @@ func Int32Slice() []int32 {
 
 // Int64 generates a random int64 value.
 func Int64() int64 {
-	return int64(rand.Int63())
+	return int64(rnd.Int63())
 }
 
 // Int64Ptr generates a random int64 value and returns the pointer to it.
@@ -209,7 +211,7 @@ func Int64Slice() []int64 {
 
 // Uint generates a random uint value.
 func Uint() uint {
-	return uint(rand.Uint64())
+	return uint(rnd.Uint64())
 }
 
 // UintPtr generates a random uint value and returns the pointer to it.
@@ -230,7 +232,7 @@ func UintSlice() []uint {
 
 // Uint8 generates a random uint8 value.
 func Uint8() uint8 {
-	return uint8(rand.Uint64())
+	return uint8(rnd.Uint64())
 }
 
 // Uint8Ptr generates a random uint8 value and returns the pointer to it.
@@ -251,7 +253,7 @@ func Uint8Slice() []uint8 {
 
 // Uint16 generates a random uint16 value.
 func Uint16() uint16 {
-	return uint16(rand.Uint64())
+	return uint16(rnd.Uint64())
 }
 
 // Uint16Ptr generates a random uint16 value and returns the pointer to it.
@@ -272,7 +274,7 @@ func Uint16Slice() []uint16 {
 
 // Uint32 generates a random uint32 value.
 func Uint32() uint32 {
-	return rand.Uint32()
+	return rnd.Uint32()
 }
 
 // Uint32Ptr generates a random uint32 value and returns the pointer to it.
@@ -293,7 +295,7 @@ func Uint32Slice() []uint32 {
 
 // Uint64 generates a random uint64 value.
 func Uint64() uint64 {
-	return rand.Uint64()
+	return rnd.Uint64()
 }
 
 // Uint64Ptr generates a random uint64 value and returns the pointer to it.
@@ -314,7 +316,7 @@ func Uint64Slice() []uint64 {
 
 // Float32 generates a random float32 value.
 func Float32() float32 {
-	return rand.Float32()
+	return rnd.Float32()
 }
 
 // Float32Ptr generates a random float32 value and returns the pointer to it.
@@ -335,7 +337,7 @@ func Float32Slice() []float32 {
 
 // Float64 generates a random float64 value.
 func Float64() float64 {
-	return rand.Float64()
+	return rnd.Float64()
 }
 
 // Float64Ptr generates a random float64 value and returns the pointer to it.
@@ -356,8 +358,8 @@ func Float64Slice() []float64 {
 
 // Complex64 generates a random complex64 value.
 func Complex64() complex64 {
-	r := rand.Float32()
-	i := rand.Float32()
+	r := rnd.Float32()
+	i := rnd.Float32()
 	return complex(r, i)
 }
 
@@ -379,8 +381,8 @@ func Complex64Slice() []complex64 {
 
 // Complex128 generates a random complex128 value.
 func Complex128() complex128 {
-	r := rand.Float64()
-	i := rand.Float64()
+	r := rnd.Float64()
+	i := rnd.Float64()
 	return complex(r, i)
 }
 
@@ -402,7 +404,7 @@ func Complex128Slice() []complex128 {
 
 // Byte generates a random byte value.
 func Byte() byte {
-	return byte(rand.Int63())
+	return byte(rnd.Int63())
 }
 
 // BytePtr generates a random byte value and returns the pointer to it.
@@ -423,7 +425,7 @@ func ByteSlice() []byte {
 
 // Rune generates a random rune value.
 func Rune() rune {
-	return rune(rand.Int63())
+	return rune(rnd.Int63())
 }
 
 // RunePtr generates a random rune value and returns the pointer to it.
@@ -444,7 +446,7 @@ func RuneSlice() []rune {
 
 // Duration generates a random time.Duration value.
 func Duration() time.Duration {
-	h, m, s := rand.Intn(100), rand.Intn(60), rand.Intn(60)
+	h, m, s := rnd.Intn(100), rnd.Intn(60), rnd.Intn(60)
 	d, _ := time.ParseDuration(fmt.Sprintf("%dh%dm%ds", h, m, s))
 	return d
 }
