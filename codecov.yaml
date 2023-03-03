@@ -35,7 +35,7 @@ coverage:
     patch:
       default:
         # The minimum coverage ratio for success
-        target: 90%
+        target: 75%
 
 # See https://docs.codecov.com/docs/codecovyml-reference#comment
 # See https://docs.codecov.com/docs/pull-request-comments

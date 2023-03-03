@@ -3,7 +3,6 @@
 package config
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sync"
@@ -106,7 +105,7 @@ func Watch(config sync.Locker, subscribers []chan Update, opts ...Option) (func(
 				if f, ok := c.filesToFields[path]; ok {
 					// Write
 					if event.Op&fsnotify.Write == fsnotify.Write {
-						if b, err := ioutil.ReadFile(path); err == nil {
+						if b, err := os.ReadFile(path); err == nil {
 							val := string(b)
 							c.log(3, "received an update from %s: %s", path, val)
 							config.Lock()
@@ -122,7 +121,7 @@ func Watch(config sync.Locker, subscribers []chan Update, opts ...Option) (func(
 					if event.Op&fsnotify.Remove == fsnotify.Remove {
 						// Check if the removed file is already recreated
 						if _, err := os.Stat(path); err == nil {
-							if b, err := ioutil.ReadFile(path); err == nil {
+							if b, err := os.ReadFile(path); err == nil {
 								val := string(b)
 								c.log(3, "received an update from %s: %s", path, val)
 								config.Lock()

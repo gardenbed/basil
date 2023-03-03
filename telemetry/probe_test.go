@@ -292,7 +292,7 @@ func TestCreateLogger(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(T *testing.T) {
 			logger, close := createLogger(tc.options)
-			defer close(context.Background())
+			defer close(context.Background()) // nolint: errcheck
 
 			assert.NotNil(t, logger)
 			assert.NotNil(t, close)
@@ -360,7 +360,7 @@ func TestCreateJaeger(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			tracer, close := createJaeger(tc.options)
-			defer close(context.Background())
+			defer close(context.Background()) // nolint: errcheck
 
 			assert.NotNil(t, tracer)
 			assert.NotNil(t, close)
@@ -395,7 +395,7 @@ func TestCreateOpenTelemetry(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			meter, tracer, close := createOpenTelemetry(tc.options)
-			defer close(context.Background())
+			defer close(context.Background()) // nolint: errcheck
 
 			assert.NotNil(t, meter)
 			assert.NotNil(t, tracer)

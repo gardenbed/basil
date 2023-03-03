@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 )
 
@@ -56,7 +56,7 @@ func NewClientError(resp *http.Response) *ClientError {
 			Message string `json:"message"`
 		})
 
-		if b, err := ioutil.ReadAll(resp.Body); err == nil {
+		if b, err := io.ReadAll(resp.Body); err == nil {
 			_ = json.Unmarshal(b, respBody)
 			switch {
 			case respBody.Error != "":

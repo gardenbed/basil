@@ -21,7 +21,7 @@ var params = struct {
 }
 
 func main() {
-	config.Pick(&params)
+	_ = config.Pick(&params)
 	flag.Parse()
 
 	fmt.Printf("\nParameters: %+v\n\n", params)

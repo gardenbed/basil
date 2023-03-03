@@ -13,7 +13,7 @@ var params = struct {
 }{}
 
 func main() {
-	config.Pick(&params, config.Telepresence(), config.Debug(3))
+	_ = config.Pick(&params, config.Telepresence(), config.Debug(3))
 	log.Printf("making service-to-service calls using this token: %s", params.AuthToken)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {

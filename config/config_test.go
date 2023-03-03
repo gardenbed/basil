@@ -3,7 +3,6 @@ package config
 import (
 	"errors"
 	"flag"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"reflect"
@@ -737,7 +736,7 @@ func TestPick(t *testing.T) {
 
 			// Write configuration files
 			for _, f := range tc.files {
-				tmpfile, err := ioutil.TempFile("", "gotest_")
+				tmpfile, err := os.CreateTemp("", "gotest_")
 				assert.NoError(t, err)
 				defer os.Remove(tmpfile.Name())
 
@@ -1043,7 +1042,7 @@ func TestWatch(t *testing.T) {
 
 			// Write configuration files
 			for _, f := range tc.files {
-				tmpfile, err := ioutil.TempFile("", "gotest_")
+				tmpfile, err := os.CreateTemp("", "gotest_")
 				assert.NoError(t, err)
 				defer os.Remove(tmpfile.Name())
 
@@ -1061,7 +1060,7 @@ func TestWatch(t *testing.T) {
 				wg.Add(1)
 				newValue := f.newValue
 				time.AfterFunc(updateDelay, func() {
-					err := ioutil.WriteFile(tmpfile.Name(), []byte(newValue), 0644)
+					err := os.WriteFile(tmpfile.Name(), []byte(newValue), 0644)
 					assert.NoError(t, err)
 					wg.Done()
 				})

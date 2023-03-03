@@ -3,7 +3,6 @@ package config
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -150,6 +149,7 @@ func (r *reader) log(verbosity uint, msg string, args ...interface{}) {
 //   - command-line flags,
 //   - environment variables,
 //   - or configuration files
+//
 // If the value is read from a file, the second returned value will be the file path.
 func (r *reader) getFieldValue(fieldName, flagName, envName, fileEnvName string) (string, string) {
 	var value, filePath string
@@ -184,7 +184,7 @@ func (r *reader) getFieldValue(fieldName, flagName, envName, fileEnvName string)
 
 			// Read config file
 			filePath = filepath.Clean(filePath)
-			if b, err := ioutil.ReadFile(filePath); err == nil {
+			if b, err := os.ReadFile(filePath); err == nil {
 				value = string(b)
 				r.log(5, "[%s] value read from %s: %s", fieldName, filePath, value)
 			}

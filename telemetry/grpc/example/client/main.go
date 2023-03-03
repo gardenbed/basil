@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/gardenbed/basil/telemetry"
@@ -40,8 +41,9 @@ func main() {
 		panic(http.ListenAndServe(httpPort, nil))
 	}()
 
+	creds := insecure.NewCredentials()
 	opts := ci.DialOptions()
-	opts = append(opts, grpc.WithInsecure())
+	opts = append(opts, grpc.WithTransportCredentials(creds))
 	conn, err := grpc.Dial(grpcServer, opts...)
 	if err != nil {
 		panic(err)

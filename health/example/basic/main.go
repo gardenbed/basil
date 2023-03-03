@@ -16,5 +16,5 @@ func main() {
 
 	logger.Infof("Listening on port 8080 ...")
 	http.Handle("/health", health.HandlerFunc())
-	http.ListenAndServe(":8080", nil)
+	_ = http.ListenAndServe(":8080", nil)
 }
