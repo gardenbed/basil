@@ -11,7 +11,6 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/instrument"
-	"go.opentelemetry.io/otel/metric/unit"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -31,25 +30,22 @@ type serverInstruments struct {
 func newServerInstruments(m metric.Meter) *serverInstruments {
 	panic, _ := m.Int64Counter(
 		"incoming_grpc_requests_panic",
-		instrument.WithUnit(unit.Dimensionless),
 		instrument.WithDescription("The total number of panics happened in grpc handlers (server-side)"),
 	)
 
 	total, _ := m.Int64Counter(
 		"incoming_grpc_requests_total",
-		instrument.WithUnit(unit.Dimensionless),
 		instrument.WithDescription("The total number of incoming grpc requests (server-side)"),
 	)
 
 	active, _ := m.Int64UpDownCounter(
 		"incoming_grpc_requests_active",
-		instrument.WithUnit(unit.Dimensionless),
 		instrument.WithDescription("The number of in-flight incoming grpc requests (server-side)"),
 	)
 
 	latency, _ := m.Int64Histogram(
 		"incoming_grpc_requests_latency",
-		instrument.WithUnit(unit.Milliseconds),
+		instrument.WithUnit("ms"),
 		instrument.WithDescription("The duration of incoming grpc requests in milliseconds (server-side)"),
 	)
 

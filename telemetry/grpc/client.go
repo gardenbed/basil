@@ -11,7 +11,6 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/instrument"
-	"go.opentelemetry.io/otel/metric/unit"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -30,19 +29,17 @@ type clientInstruments struct {
 func newClientInstruments(m metric.Meter) *clientInstruments {
 	total, _ := m.Int64Counter(
 		"outgoing_grpc_requests_total",
-		instrument.WithUnit(unit.Dimensionless),
 		instrument.WithDescription("The total number of outgoing grpc requests (client-side)"),
 	)
 
 	active, _ := m.Int64UpDownCounter(
 		"outgoing_grpc_requests_active",
-		instrument.WithUnit(unit.Dimensionless),
 		instrument.WithDescription("The number of in-flight outgoing grpc requests (client-side)"),
 	)
 
 	latency, _ := m.Int64Histogram(
 		"outgoing_grpc_requests_latency",
-		instrument.WithUnit(unit.Milliseconds),
+		instrument.WithUnit("ms"),
 		instrument.WithDescription("The duration of outgoing grpc requests in milliseconds (client-side)"),
 	)
 
