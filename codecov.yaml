@@ -12,7 +12,7 @@ codecov:
 coverage:
   precision: 2
   round: down
-  range: '75...95'
+  range: '80...95'
 
   # See https://docs.codecov.com/docs/codecovyml-reference#coveragestatus
   # See https://docs.codecov.com/docs/commit-status
@@ -35,7 +35,7 @@ coverage:
     patch:
       default:
         # The minimum coverage ratio for success
-        target: 75%
+        target: 90%
 
 # See https://docs.codecov.com/docs/codecovyml-reference#comment
 # See https://docs.codecov.com/docs/pull-request-comments
