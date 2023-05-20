@@ -7,6 +7,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/global"
+	"go.opentelemetry.io/otel/metric/noop"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/stretchr/testify/assert"
@@ -149,7 +150,7 @@ func TestMeterFromContext(t *testing.T) {
 		{
 			name:          "SingletonMeter",
 			ctx:           context.Background(),
-			expectedMeter: metric.NewNoopMeter(),
+			expectedMeter: noop.NewMeterProvider().Meter(""),
 		},
 		{
 			name:          "CustomMeter",

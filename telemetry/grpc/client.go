@@ -10,7 +10,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/metric/instrument"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -21,26 +20,26 @@ import (
 
 // Client-side instruments for measurements.
 type clientInstruments struct {
-	total   instrument.Int64Counter
-	active  instrument.Int64UpDownCounter
-	latency instrument.Int64Histogram
+	total   metric.Int64Counter
+	active  metric.Int64UpDownCounter
+	latency metric.Int64Histogram
 }
 
 func newClientInstruments(m metric.Meter) *clientInstruments {
 	total, _ := m.Int64Counter(
 		"outgoing_grpc_requests_total",
-		instrument.WithDescription("The total number of outgoing grpc requests (client-side)"),
+		metric.WithDescription("The total number of outgoing grpc requests (client-side)"),
 	)
 
 	active, _ := m.Int64UpDownCounter(
 		"outgoing_grpc_requests_active",
-		instrument.WithDescription("The number of in-flight outgoing grpc requests (client-side)"),
+		metric.WithDescription("The number of in-flight outgoing grpc requests (client-side)"),
 	)
 
 	latency, _ := m.Int64Histogram(
 		"outgoing_grpc_requests_latency",
-		instrument.WithUnit("ms"),
-		instrument.WithDescription("The duration of outgoing grpc requests in milliseconds (client-side)"),
+		metric.WithUnit("ms"),
+		metric.WithDescription("The duration of outgoing grpc requests in milliseconds (client-side)"),
 	)
 
 	return &clientInstruments{
@@ -104,8 +103,9 @@ func (i *ClientInterceptor) unaryInterceptor(ctx context.Context, fullMethod str
 	streamAttr := attribute.Bool("stream", stream)
 
 	// Handle the number of in-flight requests
-	i.instruments.active.Add(ctx, 1, packageAttr, serviceAttr, methodAttr, streamAttr)
-	defer i.instruments.active.Add(ctx, -1, packageAttr, serviceAttr, methodAttr, streamAttr)
+	reqOpt := metric.WithAttributes(packageAttr, serviceAttr, methodAttr, streamAttr)
+	i.instruments.active.Add(ctx, 1, reqOpt)
+	defer i.instruments.active.Add(ctx, -1, reqOpt)
 
 	// Make sure the request has a UUID
 	requestUUID, ok := telemetry.UUIDFromContext(ctx)
@@ -146,8 +146,9 @@ func (i *ClientInterceptor) unaryInterceptor(ctx context.Context, fullMethod str
 
 	// Report metrics
 	successAttr := attribute.Bool("success", success)
-	i.instruments.total.Add(ctx, 1, packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
-	i.instruments.latency.Record(ctx, duration, packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
+	resOpt := metric.WithAttributes(packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
+	i.instruments.total.Add(ctx, 1, resOpt)
+	i.instruments.latency.Record(ctx, duration, resOpt)
 
 	// Report logs
 	logger := i.probe.Logger()
@@ -211,8 +212,9 @@ func (i *ClientInterceptor) streamInterceptor(ctx context.Context, desc *grpc.St
 	streamAttr := attribute.Bool("stream", stream)
 
 	// Handle the number of in-flight requests
-	i.instruments.active.Add(ctx, 1, packageAttr, serviceAttr, methodAttr, streamAttr)
-	i.instruments.active.Add(ctx, -1, packageAttr, serviceAttr, methodAttr, streamAttr)
+	reqOpt := metric.WithAttributes(packageAttr, serviceAttr, methodAttr, streamAttr)
+	i.instruments.active.Add(ctx, 1, reqOpt)
+	i.instruments.active.Add(ctx, -1, reqOpt)
 
 	// Make sure the request has a UUID
 	requestUUID, ok := telemetry.UUIDFromContext(ctx)
@@ -253,8 +255,9 @@ func (i *ClientInterceptor) streamInterceptor(ctx context.Context, desc *grpc.St
 
 	// Report metrics
 	successAttr := attribute.Bool("success", success)
-	i.instruments.total.Add(ctx, 1, packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
-	i.instruments.latency.Record(ctx, duration, packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
+	resOpt := metric.WithAttributes(packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
+	i.instruments.total.Add(ctx, 1, resOpt)
+	i.instruments.latency.Record(ctx, duration, resOpt)
 
 	// Report logs
 	logger := i.probe.Logger()

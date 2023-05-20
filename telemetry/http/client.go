@@ -12,7 +12,6 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/metric/instrument"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/gardenbed/basil/telemetry"
@@ -20,26 +19,26 @@ import (
 
 // Client-side instruments for measurements.
 type clientInstruments struct {
-	total   instrument.Int64Counter
-	active  instrument.Int64UpDownCounter
-	latency instrument.Int64Histogram
+	total   metric.Int64Counter
+	active  metric.Int64UpDownCounter
+	latency metric.Int64Histogram
 }
 
 func newClientInstruments(m metric.Meter) *clientInstruments {
 	total, _ := m.Int64Counter(
 		"outgoing_http_requests_total",
-		instrument.WithDescription("The total number of outgoing http requests (client-side)"),
+		metric.WithDescription("The total number of outgoing http requests (client-side)"),
 	)
 
 	active, _ := m.Int64UpDownCounter(
 		"outgoing_http_requests_active",
-		instrument.WithDescription("The number of in-flight outgoing http requests (client-side)"),
+		metric.WithDescription("The number of in-flight outgoing http requests (client-side)"),
 	)
 
 	latency, _ := m.Int64Histogram(
 		"outgoing_http_requests_latency",
-		instrument.WithUnit("ms"),
-		instrument.WithDescription("The duration of outgoing http requests in milliseconds (client-side)"),
+		metric.WithUnit("ms"),
+		metric.WithDescription("The duration of outgoing http requests in milliseconds (client-side)"),
 	)
 
 	return &clientInstruments{
@@ -138,8 +137,9 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	routeAttr := attribute.String("route", route)
 
 	// Handle the number of in-flight requests
-	c.instruments.active.Add(ctx, 1, methodAttr, routeAttr)
-	defer c.instruments.active.Add(ctx, -1, methodAttr, routeAttr)
+	reqOpt := metric.WithAttributes(methodAttr, routeAttr)
+	c.instruments.active.Add(ctx, 1, reqOpt)
+	defer c.instruments.active.Add(ctx, -1, reqOpt)
 
 	// Make sure the request has a UUID
 	requestUUID, ok := telemetry.UUIDFromContext(ctx)
@@ -180,8 +180,9 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	// Report metrics
 	statusCodeAttr := attribute.Int("status_code", statusCode)
 	statusClassAttr := attribute.String("status_class", statusClass)
-	c.instruments.total.Add(ctx, 1, methodAttr, routeAttr, statusCodeAttr, statusClassAttr)
-	c.instruments.latency.Record(ctx, duration, methodAttr, routeAttr, statusCodeAttr, statusClassAttr)
+	resOpt := metric.WithAttributes(methodAttr, routeAttr, statusCodeAttr, statusClassAttr)
+	c.instruments.total.Add(ctx, 1, resOpt)
+	c.instruments.latency.Record(ctx, duration, resOpt)
 
 	// Report logs
 	logger := c.probe.Logger()

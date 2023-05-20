@@ -10,7 +10,6 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/metric/instrument"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/gardenbed/basil/telemetry"
@@ -18,32 +17,32 @@ import (
 
 // Server-side instruments for measurements.
 type serverInstruments struct {
-	panic   instrument.Int64Counter
-	total   instrument.Int64Counter
-	active  instrument.Int64UpDownCounter
-	latency instrument.Int64Histogram
+	panic   metric.Int64Counter
+	total   metric.Int64Counter
+	active  metric.Int64UpDownCounter
+	latency metric.Int64Histogram
 }
 
 func newServerInstruments(m metric.Meter) *serverInstruments {
 	panic, _ := m.Int64Counter(
 		"incoming_http_requests_panic",
-		instrument.WithDescription("The total number of panics happened in http handlers (server-side)"),
+		metric.WithDescription("The total number of panics happened in http handlers (server-side)"),
 	)
 
 	total, _ := m.Int64Counter(
 		"incoming_http_requests_total",
-		instrument.WithDescription("The total number of incoming http requests (server-side)"),
+		metric.WithDescription("The total number of incoming http requests (server-side)"),
 	)
 
 	active, _ := m.Int64UpDownCounter(
 		"incoming_http_requests_active",
-		instrument.WithDescription("The number of in-flight incoming http requests (server-side)"),
+		metric.WithDescription("The number of in-flight incoming http requests (server-side)"),
 	)
 
 	latency, _ := m.Int64Histogram(
 		"incoming_http_requests_latency",
-		instrument.WithUnit("ms"),
-		instrument.WithDescription("The duration of incoming http requests in milliseconds (server-side)"),
+		metric.WithUnit("ms"),
+		metric.WithDescription("The duration of incoming http requests in milliseconds (server-side)"),
 	)
 
 	return &serverInstruments{
@@ -104,8 +103,9 @@ func (m *Middleware) Wrap(next http.HandlerFunc) http.HandlerFunc {
 		routeAttr := attribute.String("route", route)
 
 		// Handle the number of in-flight requests
-		m.instruments.active.Add(ctx, 1, methodAttr, routeAttr)
-		defer m.instruments.active.Add(ctx, -1, methodAttr, routeAttr)
+		reqOpt := metric.WithAttributes(methodAttr, routeAttr)
+		m.instruments.active.Add(ctx, 1, reqOpt)
+		defer m.instruments.active.Add(ctx, -1, reqOpt)
 
 		// Make sure the request has a UUID
 		requestUUID := r.Header.Get(requestUUIDHeader)
@@ -169,8 +169,9 @@ func (m *Middleware) Wrap(next http.HandlerFunc) http.HandlerFunc {
 		// Report metrics
 		statusCodeAttr := attribute.Int("status_code", statusCode)
 		statusClassAttr := attribute.String("status_class", statusClass)
-		m.instruments.total.Add(ctx, 1, methodAttr, routeAttr, statusCodeAttr, statusClassAttr)
-		m.instruments.latency.Record(ctx, duration, methodAttr, routeAttr, statusCodeAttr, statusClassAttr)
+		resOpt := metric.WithAttributes(methodAttr, routeAttr, statusCodeAttr, statusClassAttr)
+		m.instruments.total.Add(ctx, 1, resOpt)
+		m.instruments.latency.Record(ctx, duration, resOpt)
 
 		// Report logs
 		message := fmt.Sprintf("%s %s %d %dms", method, url, statusCode, duration)

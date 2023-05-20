@@ -9,17 +9,16 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/metric/instrument"
 )
 
 type instruments struct {
-	reqCounter  instrument.Int64Counter
-	reqDuration instrument.Float64Histogram
+	reqCounter  metric.Int64Counter
+	reqDuration metric.Float64Histogram
 }
 
 func newInstruments(m metric.Meter) *instruments {
-	reqCounter, _ := m.Int64Counter("requests_total", instrument.WithDescription("the total number of requests"))
-	reqDuration, _ := m.Float64Histogram("request_duration_seconds", instrument.WithDescription("the duration of requests in seconds"))
+	reqCounter, _ := m.Int64Counter("requests_total", metric.WithDescription("the total number of requests"))
+	reqDuration, _ := m.Float64Histogram("request_duration_seconds", metric.WithDescription("the duration of requests in seconds"))
 
 	return &instruments{
 		reqCounter:  reqCounter,
@@ -42,15 +41,15 @@ func (s *server) Handle(ctx context.Context) {
 	s.respond(ctx)
 	duration := time.Since(start)
 
-	attrs := []attribute.KeyValue{
+	opts := metric.WithAttributes(
 		attribute.String("method", "GET"),
 		attribute.String("endpoint", "/user"),
 		attribute.Int("statusCode", 200),
-	}
+	)
 
 	// Metrics
-	s.instruments.reqCounter.Add(ctx, 1, attrs...)
-	s.instruments.reqDuration.Record(ctx, duration.Seconds(), attrs...)
+	s.instruments.reqCounter.Add(ctx, 1, opts)
+	s.instruments.reqDuration.Record(ctx, duration.Seconds(), opts)
 
 	// Logging
 	s.probe.Logger().Info("request handled successfully.",

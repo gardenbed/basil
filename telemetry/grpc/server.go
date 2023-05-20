@@ -10,7 +10,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/metric/instrument"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -21,32 +20,32 @@ import (
 
 // Server-side instruments for measurements.
 type serverInstruments struct {
-	panic   instrument.Int64Counter
-	total   instrument.Int64Counter
-	active  instrument.Int64UpDownCounter
-	latency instrument.Int64Histogram
+	panic   metric.Int64Counter
+	total   metric.Int64Counter
+	active  metric.Int64UpDownCounter
+	latency metric.Int64Histogram
 }
 
 func newServerInstruments(m metric.Meter) *serverInstruments {
 	panic, _ := m.Int64Counter(
 		"incoming_grpc_requests_panic",
-		instrument.WithDescription("The total number of panics happened in grpc handlers (server-side)"),
+		metric.WithDescription("The total number of panics happened in grpc handlers (server-side)"),
 	)
 
 	total, _ := m.Int64Counter(
 		"incoming_grpc_requests_total",
-		instrument.WithDescription("The total number of incoming grpc requests (server-side)"),
+		metric.WithDescription("The total number of incoming grpc requests (server-side)"),
 	)
 
 	active, _ := m.Int64UpDownCounter(
 		"incoming_grpc_requests_active",
-		instrument.WithDescription("The number of in-flight incoming grpc requests (server-side)"),
+		metric.WithDescription("The number of in-flight incoming grpc requests (server-side)"),
 	)
 
 	latency, _ := m.Int64Histogram(
 		"incoming_grpc_requests_latency",
-		instrument.WithUnit("ms"),
-		instrument.WithDescription("The duration of incoming grpc requests in milliseconds (server-side)"),
+		metric.WithUnit("ms"),
+		metric.WithDescription("The duration of incoming grpc requests in milliseconds (server-side)"),
 	)
 
 	return &serverInstruments{
@@ -127,8 +126,9 @@ func (i *ServerInterceptor) unaryInterceptor(ctx context.Context, req interface{
 	streamAttr := attribute.Bool("stream", stream)
 
 	// Handle the number of in-flight requests
-	i.instruments.active.Add(ctx, 1, packageAttr, serviceAttr, methodAttr, streamAttr)
-	defer i.instruments.active.Add(ctx, -1, packageAttr, serviceAttr, methodAttr, streamAttr)
+	reqOpt := metric.WithAttributes(packageAttr, serviceAttr, methodAttr, streamAttr)
+	i.instruments.active.Add(ctx, 1, reqOpt)
+	defer i.instruments.active.Add(ctx, -1, reqOpt)
 
 	// Get grpc request metadata
 	md, ok := metadata.FromIncomingContext(ctx)
@@ -203,8 +203,9 @@ func (i *ServerInterceptor) unaryInterceptor(ctx context.Context, req interface{
 
 	// Report metrics
 	successAttr := attribute.Bool("success", success)
-	i.instruments.total.Add(ctx, 1, packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
-	i.instruments.latency.Record(ctx, duration, packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
+	resOpt := metric.WithAttributes(packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
+	i.instruments.total.Add(ctx, 1, resOpt)
+	i.instruments.latency.Record(ctx, duration, resOpt)
 
 	// Report logs
 	message := fmt.Sprintf("%s %s %dms", kind, e, duration)
@@ -275,8 +276,9 @@ func (i *ServerInterceptor) streamInterceptor(srv interface{}, ss grpc.ServerStr
 	streamAttr := attribute.Bool("stream", stream)
 
 	// Handle the number of in-flight requests
-	i.instruments.active.Add(ctx, 1, packageAttr, serviceAttr, methodAttr, streamAttr)
-	defer i.instruments.active.Add(ctx, -1, packageAttr, serviceAttr, methodAttr, streamAttr)
+	reqOpt := metric.WithAttributes(packageAttr, serviceAttr, methodAttr, streamAttr)
+	i.instruments.active.Add(ctx, 1, reqOpt)
+	defer i.instruments.active.Add(ctx, -1, reqOpt)
 
 	// Get grpc request metadata (an incoming grpc request context is guaranteed to have metadata)
 	md, _ := metadata.FromIncomingContext(ctx)
@@ -348,8 +350,9 @@ func (i *ServerInterceptor) streamInterceptor(srv interface{}, ss grpc.ServerStr
 
 	// Report metrics
 	successAttr := attribute.Bool("success", success)
-	i.instruments.total.Add(ctx, 1, packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
-	i.instruments.latency.Record(ctx, duration, packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
+	resOpt := metric.WithAttributes(packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
+	i.instruments.total.Add(ctx, 1, resOpt)
+	i.instruments.latency.Record(ctx, duration, resOpt)
 
 	// Report logs
 	message := fmt.Sprintf("%s %s %dms", kind, e, duration)
