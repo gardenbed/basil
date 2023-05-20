@@ -12,7 +12,6 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/metric/instrument"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/gardenbed/basil/telemetry"
@@ -20,26 +19,26 @@ import (
 
 // Client-side instruments for measurements.
 type clientInstruments struct {
-	total   instrument.Int64Counter
-	active  instrument.Int64UpDownCounter
-	latency instrument.Int64Histogram
+	total   metric.Int64Counter
+	active  metric.Int64UpDownCounter
+	latency metric.Int64Histogram
 }
 
 func newClientInstruments(m metric.Meter) *clientInstruments {
 	total, _ := m.Int64Counter(
 		"outgoing_http_requests_total",
-		instrument.WithDescription("The total number of outgoing http requests (client-side)"),
+		metric.WithDescription("The total number of outgoing http requests (client-side)"),
 	)
 
 	active, _ := m.Int64UpDownCounter(
 		"outgoing_http_requests_active",
-		instrument.WithDescription("The number of in-flight outgoing http requests (client-side)"),
+		metric.WithDescription("The number of in-flight outgoing http requests (client-side)"),
 	)
 
 	latency, _ := m.Int64Histogram(
 		"outgoing_http_requests_latency",
-		instrument.WithUnit("ms"),
-		instrument.WithDescription("The duration of outgoing http requests in milliseconds (client-side)"),
+		metric.WithUnit("ms"),
+		metric.WithDescription("The duration of outgoing http requests in milliseconds (client-side)"),
 	)
 
 	return &clientInstruments{
