@@ -138,8 +138,9 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	routeAttr := attribute.String("route", route)
 
 	// Handle the number of in-flight requests
-	c.instruments.active.Add(ctx, 1, methodAttr, routeAttr)
-	defer c.instruments.active.Add(ctx, -1, methodAttr, routeAttr)
+	reqOpt := metric.WithAttributes(methodAttr, routeAttr)
+	c.instruments.active.Add(ctx, 1, reqOpt)
+	defer c.instruments.active.Add(ctx, -1, reqOpt)
 
 	// Make sure the request has a UUID
 	requestUUID, ok := telemetry.UUIDFromContext(ctx)
@@ -180,8 +181,9 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	// Report metrics
 	statusCodeAttr := attribute.Int("status_code", statusCode)
 	statusClassAttr := attribute.String("status_class", statusClass)
-	c.instruments.total.Add(ctx, 1, methodAttr, routeAttr, statusCodeAttr, statusClassAttr)
-	c.instruments.latency.Record(ctx, duration, methodAttr, routeAttr, statusCodeAttr, statusClassAttr)
+	resOpt := metric.WithAttributes(methodAttr, routeAttr, statusCodeAttr, statusClassAttr)
+	c.instruments.total.Add(ctx, 1, resOpt)
+	c.instruments.latency.Record(ctx, duration, resOpt)
 
 	// Report logs
 	logger := c.probe.Logger()

@@ -104,8 +104,9 @@ func (i *ClientInterceptor) unaryInterceptor(ctx context.Context, fullMethod str
 	streamAttr := attribute.Bool("stream", stream)
 
 	// Handle the number of in-flight requests
-	i.instruments.active.Add(ctx, 1, packageAttr, serviceAttr, methodAttr, streamAttr)
-	defer i.instruments.active.Add(ctx, -1, packageAttr, serviceAttr, methodAttr, streamAttr)
+	reqOpt := metric.WithAttributes(packageAttr, serviceAttr, methodAttr, streamAttr)
+	i.instruments.active.Add(ctx, 1, reqOpt)
+	defer i.instruments.active.Add(ctx, -1, reqOpt)
 
 	// Make sure the request has a UUID
 	requestUUID, ok := telemetry.UUIDFromContext(ctx)
@@ -146,8 +147,9 @@ func (i *ClientInterceptor) unaryInterceptor(ctx context.Context, fullMethod str
 
 	// Report metrics
 	successAttr := attribute.Bool("success", success)
-	i.instruments.total.Add(ctx, 1, packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
-	i.instruments.latency.Record(ctx, duration, packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
+	resOpt := metric.WithAttributes(packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
+	i.instruments.total.Add(ctx, 1, resOpt)
+	i.instruments.latency.Record(ctx, duration, resOpt)
 
 	// Report logs
 	logger := i.probe.Logger()
@@ -211,8 +213,9 @@ func (i *ClientInterceptor) streamInterceptor(ctx context.Context, desc *grpc.St
 	streamAttr := attribute.Bool("stream", stream)
 
 	// Handle the number of in-flight requests
-	i.instruments.active.Add(ctx, 1, packageAttr, serviceAttr, methodAttr, streamAttr)
-	i.instruments.active.Add(ctx, -1, packageAttr, serviceAttr, methodAttr, streamAttr)
+	reqOpt := metric.WithAttributes(packageAttr, serviceAttr, methodAttr, streamAttr)
+	i.instruments.active.Add(ctx, 1, reqOpt)
+	i.instruments.active.Add(ctx, -1, reqOpt)
 
 	// Make sure the request has a UUID
 	requestUUID, ok := telemetry.UUIDFromContext(ctx)
@@ -253,8 +256,9 @@ func (i *ClientInterceptor) streamInterceptor(ctx context.Context, desc *grpc.St
 
 	// Report metrics
 	successAttr := attribute.Bool("success", success)
-	i.instruments.total.Add(ctx, 1, packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
-	i.instruments.latency.Record(ctx, duration, packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
+	resOpt := metric.WithAttributes(packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
+	i.instruments.total.Add(ctx, 1, resOpt)
+	i.instruments.latency.Record(ctx, duration, resOpt)
 
 	// Report logs
 	logger := i.probe.Logger()

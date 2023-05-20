@@ -127,8 +127,9 @@ func (i *ServerInterceptor) unaryInterceptor(ctx context.Context, req interface{
 	streamAttr := attribute.Bool("stream", stream)
 
 	// Handle the number of in-flight requests
-	i.instruments.active.Add(ctx, 1, packageAttr, serviceAttr, methodAttr, streamAttr)
-	defer i.instruments.active.Add(ctx, -1, packageAttr, serviceAttr, methodAttr, streamAttr)
+	reqOpt := metric.WithAttributes(packageAttr, serviceAttr, methodAttr, streamAttr)
+	i.instruments.active.Add(ctx, 1, reqOpt)
+	defer i.instruments.active.Add(ctx, -1, reqOpt)
 
 	// Get grpc request metadata
 	md, ok := metadata.FromIncomingContext(ctx)
@@ -203,8 +204,9 @@ func (i *ServerInterceptor) unaryInterceptor(ctx context.Context, req interface{
 
 	// Report metrics
 	successAttr := attribute.Bool("success", success)
-	i.instruments.total.Add(ctx, 1, packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
-	i.instruments.latency.Record(ctx, duration, packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
+	resOpt := metric.WithAttributes(packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
+	i.instruments.total.Add(ctx, 1, resOpt)
+	i.instruments.latency.Record(ctx, duration, resOpt)
 
 	// Report logs
 	message := fmt.Sprintf("%s %s %dms", kind, e, duration)
@@ -275,8 +277,9 @@ func (i *ServerInterceptor) streamInterceptor(srv interface{}, ss grpc.ServerStr
 	streamAttr := attribute.Bool("stream", stream)
 
 	// Handle the number of in-flight requests
-	i.instruments.active.Add(ctx, 1, packageAttr, serviceAttr, methodAttr, streamAttr)
-	defer i.instruments.active.Add(ctx, -1, packageAttr, serviceAttr, methodAttr, streamAttr)
+	reqOpt := metric.WithAttributes(packageAttr, serviceAttr, methodAttr, streamAttr)
+	i.instruments.active.Add(ctx, 1, reqOpt)
+	defer i.instruments.active.Add(ctx, -1, reqOpt)
 
 	// Get grpc request metadata (an incoming grpc request context is guaranteed to have metadata)
 	md, _ := metadata.FromIncomingContext(ctx)
@@ -348,8 +351,9 @@ func (i *ServerInterceptor) streamInterceptor(srv interface{}, ss grpc.ServerStr
 
 	// Report metrics
 	successAttr := attribute.Bool("success", success)
-	i.instruments.total.Add(ctx, 1, packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
-	i.instruments.latency.Record(ctx, duration, packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
+	resOpt := metric.WithAttributes(packageAttr, serviceAttr, methodAttr, streamAttr, successAttr)
+	i.instruments.total.Add(ctx, 1, resOpt)
+	i.instruments.latency.Record(ctx, duration, resOpt)
 
 	// Report logs
 	message := fmt.Sprintf("%s %s %dms", kind, e, duration)

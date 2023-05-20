@@ -104,8 +104,9 @@ func (m *Middleware) Wrap(next http.HandlerFunc) http.HandlerFunc {
 		routeAttr := attribute.String("route", route)
 
 		// Handle the number of in-flight requests
-		m.instruments.active.Add(ctx, 1, methodAttr, routeAttr)
-		defer m.instruments.active.Add(ctx, -1, methodAttr, routeAttr)
+		reqOpt := metric.WithAttributes(methodAttr, routeAttr)
+		m.instruments.active.Add(ctx, 1, reqOpt)
+		defer m.instruments.active.Add(ctx, -1, reqOpt)
 
 		// Make sure the request has a UUID
 		requestUUID := r.Header.Get(requestUUIDHeader)
@@ -169,8 +170,9 @@ func (m *Middleware) Wrap(next http.HandlerFunc) http.HandlerFunc {
 		// Report metrics
 		statusCodeAttr := attribute.Int("status_code", statusCode)
 		statusClassAttr := attribute.String("status_class", statusClass)
-		m.instruments.total.Add(ctx, 1, methodAttr, routeAttr, statusCodeAttr, statusClassAttr)
-		m.instruments.latency.Record(ctx, duration, methodAttr, routeAttr, statusCodeAttr, statusClassAttr)
+		resOpt := metric.WithAttributes(methodAttr, routeAttr, statusCodeAttr, statusClassAttr)
+		m.instruments.total.Add(ctx, 1, resOpt)
+		m.instruments.latency.Record(ctx, duration, resOpt)
 
 		// Report logs
 		message := fmt.Sprintf("%s %s %d %dms", method, url, statusCode, duration)

@@ -42,15 +42,15 @@ func (s *server) Handle(ctx context.Context) {
 	s.respond(ctx)
 	duration := time.Since(start)
 
-	attrs := []attribute.KeyValue{
+	opts := metric.WithAttributes(
 		attribute.String("method", "GET"),
 		attribute.String("endpoint", "/user"),
 		attribute.Int("statusCode", 200),
-	}
+	)
 
 	// Metrics
-	s.instruments.reqCounter.Add(ctx, 1, attrs...)
-	s.instruments.reqDuration.Record(ctx, duration.Seconds(), attrs...)
+	s.instruments.reqCounter.Add(ctx, 1, opts)
+	s.instruments.reqDuration.Record(ctx, duration.Seconds(), opts)
 
 	// Logging
 	s.probe.Logger().Info("request handled successfully.",
