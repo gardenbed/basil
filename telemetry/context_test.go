@@ -6,7 +6,6 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/metric/noop"
 	"go.opentelemetry.io/otel/trace"
 
@@ -126,7 +125,7 @@ func TestContextWithMeter(t *testing.T) {
 		{
 			name:  "OK",
 			ctx:   context.Background(),
-			meter: global.MeterProvider().Meter(""),
+			meter: otel.GetMeterProvider().Meter(""),
 		},
 	}
 
@@ -140,7 +139,7 @@ func TestContextWithMeter(t *testing.T) {
 }
 
 func TestMeterFromContext(t *testing.T) {
-	meter := global.MeterProvider().Meter("")
+	meter := otel.GetMeterProvider().Meter("")
 
 	tests := []struct {
 		name          string
