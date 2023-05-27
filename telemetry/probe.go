@@ -16,7 +16,6 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/metric/noop"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -244,7 +243,7 @@ func createPrometheus(o options) (metric.Meter, http.Handler) {
 		metricsdk.WithResource(resource),
 	)
 
-	global.SetMeterProvider(provider)
+	otel.SetMeterProvider(provider)
 	meter := provider.Meter(o.name)
 
 	// Create a new Prometheus registry
@@ -356,7 +355,7 @@ func createOpenTelemetry(o options) (metric.Meter, trace.Tracer, closeFunc) {
 
 	// ====================> Set Globals <====================
 
-	global.SetMeterProvider(meterProvider)
+	otel.SetMeterProvider(meterProvider)
 	otel.SetTracerProvider(traceProvider)
 	otel.SetTextMapPropagator(propagation.TraceContext{})
 

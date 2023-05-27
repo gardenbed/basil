@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/metric/global"
 	"google.golang.org/grpc/credentials"
 
 	"github.com/stretchr/testify/assert"
@@ -62,7 +61,7 @@ func TestProbe_Meter(t *testing.T) {
 		{
 			name: "OK",
 			probe: &probe{
-				meter: global.MeterProvider().Meter(""),
+				meter: otel.GetMeterProvider().Meter(""),
 			},
 		},
 	}
