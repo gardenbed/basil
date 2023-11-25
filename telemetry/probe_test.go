@@ -184,14 +184,13 @@ func TestNewProbe(t *testing.T) {
 			opts: []Option{},
 		},
 		{
-			name: "PrometheusAndJaeger",
+			name: "Prometheus",
 			opts: []Option{
 				WithMetadata("my-service", "0.1.0", map[string]string{
 					"environment": "testing",
 				}),
 				WithLogger("warn"),
 				WithPrometheus(),
-				WithJaeger("localhost", "6832", "", "", ""),
 			},
 		},
 		{
@@ -201,7 +200,7 @@ func TestNewProbe(t *testing.T) {
 					"environment": "testing",
 				}),
 				WithLogger("warn"),
-				WithOpenTelemetry("localhost:55680", nil),
+				WithOpenTelemetry(true, true, "localhost:55680", nil),
 			},
 		},
 	}
@@ -233,56 +232,70 @@ func TestCreateLogger(t *testing.T) {
 				tags: map[string]string{
 					"environment": "testing",
 				},
-				loggerLevel: "warn",
+				logger: logger{
+					level: "warn",
+				},
 			},
 			expectedLevel: LevelWarn,
 		},
 		{
 			name: "LogLevelDebug",
 			options: options{
-				name:        "my-service",
-				loggerLevel: "debug",
+				name: "my-service",
+				logger: logger{
+					level: "debug",
+				},
 			},
 			expectedLevel: LevelDebug,
 		},
 		{
 			name: "LogLevelInfo",
 			options: options{
-				name:        "my-service",
-				loggerLevel: "info",
+				name: "my-service",
+				logger: logger{
+					level: "info",
+				},
 			},
 			expectedLevel: LevelInfo,
 		},
 		{
 			name: "LogLevelWarn",
 			options: options{
-				name:        "my-service",
-				loggerLevel: "warn",
+				name: "my-service",
+				logger: logger{
+					level: "warn",
+				},
 			},
 			expectedLevel: LevelWarn,
 		},
 		{
 			name: "LogLevelError",
 			options: options{
-				name:        "my-service",
-				loggerLevel: "error",
+				name: "my-service",
+				logger: logger{
+					level: "error",
+				},
 			},
 			expectedLevel: LevelError,
 		},
 		{
 			name: "LogLevelNone",
 			options: options{
-				name:        "my-service",
-				loggerLevel: "none",
+				name: "my-service",
+				logger: logger{
+					level: "none",
+				},
 			},
 			expectedLevel: LevelNone,
 		},
 		{
 			name: "InvalidLogLevel",
 			options: options{
-				name:          "my-service",
-				loggerEnabled: true,
-				loggerLevel:   "invalid",
+				name: "my-service",
+				logger: logger{
+					enabled: true,
+					level:   "invalid",
+				},
 			},
 			expectedLevel: LevelNone,
 		},
@@ -308,8 +321,10 @@ func TestCreatePrometheus(t *testing.T) {
 		{
 			name: "Production",
 			options: options{
-				name:              "my-service",
-				prometheusEnabled: true,
+				name: "my-service",
+				prometheus: prometheus{
+					enabled: true,
+				},
 			},
 		},
 	}
@@ -324,50 +339,7 @@ func TestCreatePrometheus(t *testing.T) {
 	}
 }
 
-func TestCreateJaeger(t *testing.T) {
-	tests := []struct {
-		name    string
-		options options
-	}{
-		{
-			name: "WithAgent",
-			options: options{
-				name: "my-service",
-				tags: map[string]string{
-					"environment": "testing",
-				},
-				jaegerEnabled:   true,
-				jaegerAgentHost: "localhost",
-				jaegerAgentPort: "6832",
-			},
-		},
-		{
-			name: "WithCollector",
-			options: options{
-				name: "my-service",
-				tags: map[string]string{
-					"environment": "testing",
-				},
-				jaegerEnabled:           true,
-				jaegerCollectorEndpoint: "http://localhost:14268/api/traces",
-				jaegerCollectorUsername: "username",
-				jaegerCollectorPassword: "password",
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			tracer, close := createJaeger(tc.options)
-			defer close(context.Background()) // nolint: errcheck
-
-			assert.NotNil(t, tracer)
-			assert.NotNil(t, close)
-		})
-	}
-}
-
-func TestCreateOpenTelemetry(t *testing.T) {
+func TestCreateOpenTelemetryMeter(t *testing.T) {
 	tests := []struct {
 		name    string
 		options options
@@ -375,28 +347,70 @@ func TestCreateOpenTelemetry(t *testing.T) {
 		{
 			name: "Insecure",
 			options: options{
-				name:                          "my-service",
-				opentelemetryEnabled:          true,
-				opentelemetryCollectorAddress: "localhost:55680",
+				name: "my-service",
+				opentelemetry: opentelemetry{
+					meterEnabled:     true,
+					collectorAddress: "localhost:55680",
+				},
 			},
 		},
 		{
 			name: "Secure",
 			options: options{
-				name:                              "my-service",
-				opentelemetryEnabled:              true,
-				opentelemetryCollectorAddress:     "localhost:55680",
-				opentelemetryCollectorCredentials: credentials.NewTLS(nil),
+				name: "my-service",
+				opentelemetry: opentelemetry{
+					meterEnabled:         true,
+					collectorAddress:     "localhost:55680",
+					collectorCredentials: credentials.NewTLS(nil),
+				},
 			},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			meter, tracer, close := createOpenTelemetry(tc.options)
+			meter, close := createOpenTelemetryMeter(tc.options)
 			defer close(context.Background()) // nolint: errcheck
 
 			assert.NotNil(t, meter)
+			assert.NotNil(t, close)
+		})
+	}
+}
+
+func TestCreateOpenTelemetryTracer(t *testing.T) {
+	tests := []struct {
+		name    string
+		options options
+	}{
+		{
+			name: "Insecure",
+			options: options{
+				name: "my-service",
+				opentelemetry: opentelemetry{
+					tracerEnabled:    true,
+					collectorAddress: "localhost:55680",
+				},
+			},
+		},
+		{
+			name: "Secure",
+			options: options{
+				name: "my-service",
+				opentelemetry: opentelemetry{
+					tracerEnabled:        true,
+					collectorAddress:     "localhost:55680",
+					collectorCredentials: credentials.NewTLS(nil),
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tracer, close := createOpenTelemetryTracer(tc.options)
+			defer close(context.Background()) // nolint: errcheck
+
 			assert.NotNil(t, tracer)
 			assert.NotNil(t, close)
 		})

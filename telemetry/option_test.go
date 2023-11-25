@@ -22,9 +22,13 @@ func TestOptionsFromEnv(t *testing.T) {
 			name:   "Defaults",
 			envars: []keyval{},
 			expectedOptions: options{
-				loggerLevel:                   "info",
-				opentelemetryCollectorAddress: "localhost:55680",
-				tags:                          map[string]string{},
+				logger: logger{
+					level: "info",
+				},
+				opentelemetry: opentelemetry{
+					collectorAddress: "localhost:55680",
+				},
+				tags: map[string]string{},
 			},
 		},
 		{
@@ -36,13 +40,8 @@ func TestOptionsFromEnv(t *testing.T) {
 				{"PROBE_LOGGER_ENABLED", "true"},
 				{"PROBE_LOGGER_LEVEL", "warn"},
 				{"PROBE_PROMETHEUS_ENABLED", "true"},
-				{"PROBE_JAEGER_ENABLED", "true"},
-				{"PROBE_JAEGER_AGENT_HOST", "localhost"},
-				{"PROBE_JAEGER_AGENT_PORT", "6832"},
-				{"PROBE_JAEGER_COLLECTOR_ENDPOINT", "http://localhost:14268/api/traces"},
-				{"PROBE_JAEGER_COLLECTOR_USERNAME", "username"},
-				{"PROBE_JAEGER_COLLECTOR_PASSWORD", "password"},
-				{"PROBE_OPENTELEMETRY_ENABLED", "true"},
+				{"PROBE_OPENTELEMETRY_METER_ENABLED", "true"},
+				{"PROBE_OPENTELEMETRY_TRACER_ENABLED", "true"},
 				{"PROBE_OPENTELEMETRY_COLLECTOR_ADDRESS", "localhost:55680"},
 			},
 			expectedOptions: options{
@@ -51,18 +50,19 @@ func TestOptionsFromEnv(t *testing.T) {
 				tags: map[string]string{
 					"environment": "testing",
 				},
-				loggerEnabled:                     true,
-				loggerLevel:                       "warn",
-				prometheusEnabled:                 true,
-				jaegerEnabled:                     true,
-				jaegerAgentHost:                   "localhost",
-				jaegerAgentPort:                   "6832",
-				jaegerCollectorEndpoint:           "http://localhost:14268/api/traces",
-				jaegerCollectorUsername:           "username",
-				jaegerCollectorPassword:           "password",
-				opentelemetryEnabled:              true,
-				opentelemetryCollectorAddress:     "localhost:55680",
-				opentelemetryCollectorCredentials: nil,
+				logger: logger{
+					enabled: true,
+					level:   "warn",
+				},
+				prometheus: prometheus{
+					enabled: true,
+				},
+				opentelemetry: opentelemetry{
+					meterEnabled:         true,
+					tracerEnabled:        true,
+					collectorAddress:     "localhost:55680",
+					collectorCredentials: nil,
+				},
 			},
 		},
 	}
@@ -110,8 +110,10 @@ func TestOption(t *testing.T) {
 			options: &options{},
 			option:  WithLogger("warn"),
 			expectedOptions: &options{
-				loggerEnabled: true,
-				loggerLevel:   "warn",
+				logger: logger{
+					enabled: true,
+					level:   "warn",
+				},
 			},
 		},
 		{
@@ -119,47 +121,34 @@ func TestOption(t *testing.T) {
 			options: &options{},
 			option:  WithPrometheus(),
 			expectedOptions: &options{
-				prometheusEnabled: true,
-			},
-		},
-		{
-			name:    "WithJaeger",
-			options: &options{},
-			option:  WithJaeger("localhost", "6832", "http://localhost:14268/api/traces", "username", "password"),
-			expectedOptions: &options{
-				jaegerEnabled:           true,
-				jaegerAgentHost:         "localhost",
-				jaegerAgentPort:         "6832",
-				jaegerCollectorEndpoint: "http://localhost:14268/api/traces",
-				jaegerCollectorUsername: "username",
-				jaegerCollectorPassword: "password",
-			},
-		},
-		{
-			name:    "WithJaeger_Defaults",
-			options: &options{},
-			option:  WithJaeger("", "", "", "", ""),
-			expectedOptions: &options{
-				jaegerEnabled: true,
+				prometheus: prometheus{
+					enabled: true,
+				},
 			},
 		},
 		{
 			name:    "WithOpenTelemetry",
 			options: &options{},
-			option:  WithOpenTelemetry("localhost:55680", nil),
+			option:  WithOpenTelemetry(true, true, "localhost:55680", nil),
 			expectedOptions: &options{
-				opentelemetryEnabled:              true,
-				opentelemetryCollectorAddress:     "localhost:55680",
-				opentelemetryCollectorCredentials: nil,
+				opentelemetry: opentelemetry{
+					meterEnabled:         true,
+					tracerEnabled:        true,
+					collectorAddress:     "localhost:55680",
+					collectorCredentials: nil,
+				},
 			},
 		},
 		{
 			name:    "WithOpenTelemetry_Defaults",
 			options: &options{},
-			option:  WithOpenTelemetry("", nil),
+			option:  WithOpenTelemetry(true, true, "", nil),
 			expectedOptions: &options{
-				opentelemetryEnabled:          true,
-				opentelemetryCollectorAddress: "localhost:55680",
+				opentelemetry: opentelemetry{
+					meterEnabled:     true,
+					tracerEnabled:    true,
+					collectorAddress: "localhost:55680",
+				},
 			},
 		},
 	}

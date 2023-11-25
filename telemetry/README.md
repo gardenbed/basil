@@ -64,13 +64,8 @@ Options set explicity in the code will override those set by environment variabl
 | `PROBE_LOGGER_ENABLED` | Whether or not to create a logger (boolean). |
 | `PROBE_LOGGER_LEVEL` | The verbosity level for the logger (`debug`, `info`, `warn`, `error`, or `none`). |
 | `PROBE_PROMETHEUS_ENABLED` | Whether or not to configure and create a Prometheus meter (boolean). |
-| `PROBE_JAEGER_ENABLED` | Whether or not to configure and create a Jaeger tracer (boolean). |
-| `PROBE_JAEGER_AGENT_HOST` | The Jaeger agent host (i.e. `localhost`). |
-| `PROBE_JAEGER_AGENT_PORT` | The Jaeger agent port (i.e. `6832`). |
-| `PROBE_JAEGER_COLLECTOR_ENDPOINT` | The full URL to the Jaeger HTTP Thrift collector (i.e. `http://localhost:14268/api/traces`). |
-| `PROBE_JAEGER_COLLECTOR_USERNAME` | The username for Jaeger collector endpoint if basic auth is required. |
-| `PROBE_JAEGER_COLLECTOR_PASSWORD` | The password for Jaeger collector endpoint if basic auth is required. |
-| `PROBE_OPENTELEMETRY_ENABLED` | Whether or not to configure and create an OpenTelemetry Collector meter and tracer (boolean). |
+| `PROBE_OPENTELEMETRY_METER_ENABLED` | Whether or not to configure and create an OpenTelemetry Collector meter (boolean). |
+| `PROBE_OPENTELEMETRY_TRACER_ENABLED` | Whether or not to configure and create an OpenTelemetry Collector tracer (boolean). |
 | `PROBE_OPENTELEMETRY_COLLECTOR_ADDRESS` | The address to OpenTelemetry collector (i.e. `localhost:55680`). |
 
 ## Documentation

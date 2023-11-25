@@ -80,7 +80,7 @@ func main() {
 	p := telemetry.NewProbe(
 		telemetry.WithLogger("info"),
 		telemetry.WithPrometheus(),
-		telemetry.WithJaeger("", "", "", "", ""),
+		telemetry.WithOpenTelemetry(false, true, "", nil),
 		telemetry.WithMetadata("my-service", "0.1.0", map[string]string{
 			"environment": "example",
 		}),

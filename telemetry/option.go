@@ -8,32 +8,39 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-type options struct {
-	// Metadata
-	name    string
-	version string
-	tags    map[string]string
+type (
+	options struct {
+		// Metadata
+		name    string
+		version string
+		tags    map[string]string
 
-	// Logger
-	loggerEnabled bool
-	loggerLevel   string
+		// Logger
+		logger
 
-	// Prometheus
-	prometheusEnabled bool
+		// Prometheus
+		prometheus
 
-	// Jaeger
-	jaegerEnabled           bool
-	jaegerAgentHost         string
-	jaegerAgentPort         string
-	jaegerCollectorEndpoint string
-	jaegerCollectorUsername string
-	jaegerCollectorPassword string
+		// OpenTelemetry
+		opentelemetry
+	}
 
-	// OpenTelemetry
-	opentelemetryEnabled              bool
-	opentelemetryCollectorAddress     string
-	opentelemetryCollectorCredentials credentials.TransportCredentials
-}
+	logger struct {
+		enabled bool
+		level   string
+	}
+
+	prometheus struct {
+		enabled bool
+	}
+
+	opentelemetry struct {
+		meterEnabled         bool
+		tracerEnabled        bool
+		collectorAddress     string
+		collectorCredentials credentials.TransportCredentials
+	}
+)
 
 func optionsFromEnv() options {
 	o := options{}
@@ -53,28 +60,21 @@ func optionsFromEnv() options {
 	}
 
 	// Logger
-	o.loggerEnabled, _ = strconv.ParseBool(os.Getenv("PROBE_LOGGER_ENABLED"))
-	o.loggerLevel = os.Getenv("PROBE_LOGGER_LEVEL")
-	if o.loggerLevel == "" {
-		o.loggerLevel = "info"
+	o.logger.enabled, _ = strconv.ParseBool(os.Getenv("PROBE_LOGGER_ENABLED"))
+	o.logger.level = os.Getenv("PROBE_LOGGER_LEVEL")
+	if o.logger.level == "" {
+		o.logger.level = "info"
 	}
 
 	// Prometheus
-	o.prometheusEnabled, _ = strconv.ParseBool(os.Getenv("PROBE_PROMETHEUS_ENABLED"))
-
-	// Jaeger
-	o.jaegerEnabled, _ = strconv.ParseBool(os.Getenv("PROBE_JAEGER_ENABLED"))
-	o.jaegerAgentHost = os.Getenv("PROBE_JAEGER_AGENT_HOST")
-	o.jaegerAgentPort = os.Getenv("PROBE_JAEGER_AGENT_PORT")
-	o.jaegerCollectorEndpoint = os.Getenv("PROBE_JAEGER_COLLECTOR_ENDPOINT")
-	o.jaegerCollectorUsername = os.Getenv("PROBE_JAEGER_COLLECTOR_USERNAME")
-	o.jaegerCollectorPassword = os.Getenv("PROBE_JAEGER_COLLECTOR_PASSWORD")
+	o.prometheus.enabled, _ = strconv.ParseBool(os.Getenv("PROBE_PROMETHEUS_ENABLED"))
 
 	// OpenTelemetry
-	o.opentelemetryEnabled, _ = strconv.ParseBool(os.Getenv("PROBE_OPENTELEMETRY_ENABLED"))
-	o.opentelemetryCollectorAddress = os.Getenv("PROBE_OPENTELEMETRY_COLLECTOR_ADDRESS")
-	if o.opentelemetryCollectorAddress == "" {
-		o.opentelemetryCollectorAddress = "localhost:55680"
+	o.opentelemetry.meterEnabled, _ = strconv.ParseBool(os.Getenv("PROBE_OPENTELEMETRY_METER_ENABLED"))
+	o.opentelemetry.tracerEnabled, _ = strconv.ParseBool(os.Getenv("PROBE_OPENTELEMETRY_TRACER_ENABLED"))
+	o.opentelemetry.collectorAddress = os.Getenv("PROBE_OPENTELEMETRY_COLLECTOR_ADDRESS")
+	if o.opentelemetry.collectorAddress == "" {
+		o.opentelemetry.collectorAddress = "localhost:55680"
 	}
 
 	return o
@@ -96,44 +96,30 @@ func WithMetadata(name, version string, tags map[string]string) Option {
 // WithLogger is the option for enabling the logger.
 func WithLogger(level string) Option {
 	return func(o *options) {
-		o.loggerEnabled = true
-		o.loggerLevel = level
+		o.logger.enabled = true
+		o.logger.level = level
 	}
 }
 
 // WithPrometheus is the option for enabling Prometheus.
 func WithPrometheus() Option {
 	return func(o *options) {
-		o.prometheusEnabled = true
-	}
-}
-
-// WithJaeger is the option for enabling Jaeger.
-// Only one of agentEndpoint or collectorEndpoint is required.
-// collectorUsername and collectorPassword are optional.
-// The default agent endpoint is localhost:6832.
-func WithJaeger(agentHost, agentPort, collectorEndpoint, collectorUsername, collectorPassword string) Option {
-	return func(o *options) {
-		o.jaegerEnabled = true
-		o.jaegerAgentHost = agentHost
-		o.jaegerAgentPort = agentPort
-		o.jaegerCollectorEndpoint = collectorEndpoint
-		o.jaegerCollectorUsername = collectorUsername
-		o.jaegerCollectorPassword = collectorPassword
+		o.prometheus.enabled = true
 	}
 }
 
 // WithOpenTelemetry is the option for enabling OpenTelemetry Collector.
 // collectorCredentials is optional. If not specified, the connection will be insecure.
 // The default collector address is localhost:55680.
-func WithOpenTelemetry(collectorAddress string, collectorCredentials credentials.TransportCredentials) Option {
+func WithOpenTelemetry(meterEnabled, tracerEnabled bool, collectorAddress string, collectorCredentials credentials.TransportCredentials) Option {
 	if collectorAddress == "" {
 		collectorAddress = "localhost:55680"
 	}
 
 	return func(o *options) {
-		o.opentelemetryEnabled = true
-		o.opentelemetryCollectorAddress = collectorAddress
-		o.opentelemetryCollectorCredentials = collectorCredentials
+		o.opentelemetry.meterEnabled = meterEnabled
+		o.opentelemetry.tracerEnabled = tracerEnabled
+		o.opentelemetry.collectorAddress = collectorAddress
+		o.opentelemetry.collectorCredentials = collectorCredentials
 	}
 }
