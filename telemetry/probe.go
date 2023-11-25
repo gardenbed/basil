@@ -16,10 +16,11 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/metric/noop"
+	metricnoop "go.opentelemetry.io/otel/metric/noop"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/trace"
+	tracenoop "go.opentelemetry.io/otel/trace/noop"
 
 	multierror "github.com/hashicorp/go-multierror"
 	prom "github.com/prometheus/client_golang/prometheus"
@@ -91,8 +92,8 @@ func (p *probe) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func NewVoidProbe() Probe {
 	return &probe{
 		logger: new(voidLogger),
-		meter:  noop.NewMeterProvider().Meter(""),
-		tracer: trace.NewNoopTracerProvider().Tracer(""),
+		meter:  metricnoop.NewMeterProvider().Meter(""),
+		tracer: tracenoop.NewTracerProvider().Tracer(""),
 	}
 }
 
@@ -136,11 +137,11 @@ func NewProbe(opts ...Option) Probe {
 	}
 
 	if p.meter == nil {
-		p.meter = noop.NewMeterProvider().Meter("")
+		p.meter = metricnoop.NewMeterProvider().Meter("")
 	}
 
 	if p.tracer == nil {
-		p.tracer = trace.NewNoopTracerProvider().Tracer("")
+		p.tracer = tracenoop.NewTracerProvider().Tracer("")
 	}
 
 	return p
