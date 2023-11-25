@@ -26,7 +26,7 @@ func main() {
 	probe := telemetry.NewProbe(
 		telemetry.WithLogger("info"),
 		telemetry.WithPrometheus(),
-		telemetry.WithJaeger("", "", "", "", ""),
+		telemetry.WithOpenTelemetry(false, true, "", nil),
 		telemetry.WithMetadata("client", "0.1.0", map[string]string{
 			"environment": "testing",
 		}),

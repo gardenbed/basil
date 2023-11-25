@@ -4,9 +4,6 @@ import (
 	"context"
 	"net/http"
 	"strings"
-	"time"
-
-	"golang.org/x/sync/errgroup"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -16,16 +13,16 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/metric/noop"
+	metricnoop "go.opentelemetry.io/otel/metric/noop"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/trace"
+	tracenoop "go.opentelemetry.io/otel/trace/noop"
 
 	multierror "github.com/hashicorp/go-multierror"
 	prom "github.com/prometheus/client_golang/prometheus"
 	promcollector "github.com/prometheus/client_golang/prometheus/collectors"
 	promhttp "github.com/prometheus/client_golang/prometheus/promhttp"
-	jaegerexporter "go.opentelemetry.io/otel/exporters/jaeger"
 	promexporter "go.opentelemetry.io/otel/exporters/prometheus"
 	metricsdk "go.opentelemetry.io/otel/sdk/metric"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
@@ -91,8 +88,8 @@ func (p *probe) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func NewVoidProbe() Probe {
 	return &probe{
 		logger: new(voidLogger),
-		meter:  noop.NewMeterProvider().Meter(""),
-		tracer: trace.NewNoopTracerProvider().Tracer(""),
+		meter:  metricnoop.NewMeterProvider().Meter(""),
+		tracer: tracenoop.NewTracerProvider().Tracer(""),
 	}
 }
 
@@ -107,25 +104,25 @@ func NewProbe(opts ...Option) Probe {
 		name: o.name,
 	}
 
-	if o.loggerEnabled {
+	if o.logger.enabled {
 		var close closeFunc
 		p.logger, close = createLogger(o)
 		p.closeFuncs = append(p.closeFuncs, close)
 	}
 
-	if o.prometheusEnabled {
+	if o.prometheus.enabled {
 		p.meter, p.promHandler = createPrometheus(o)
 	}
 
-	if o.jaegerEnabled {
+	if o.opentelemetry.meterEnabled {
 		var close closeFunc
-		p.tracer, close = createJaeger(o)
+		p.meter, close = createOpenTelemetryMeter(o)
 		p.closeFuncs = append(p.closeFuncs, close)
 	}
 
-	if o.opentelemetryEnabled {
+	if o.opentelemetry.tracerEnabled {
 		var close closeFunc
-		p.meter, p.tracer, close = createOpenTelemetry(o)
+		p.tracer, close = createOpenTelemetryTracer(o)
 		p.closeFuncs = append(p.closeFuncs, close)
 	}
 
@@ -136,11 +133,11 @@ func NewProbe(opts ...Option) Probe {
 	}
 
 	if p.meter == nil {
-		p.meter = noop.NewMeterProvider().Meter("")
+		p.meter = metricnoop.NewMeterProvider().Meter("")
 	}
 
 	if p.tracer == nil {
-		p.tracer = trace.NewNoopTracerProvider().Tracer("")
+		p.tracer = tracenoop.NewTracerProvider().Tracer("")
 	}
 
 	return p
@@ -200,7 +197,7 @@ func createLogger(o options) (Logger, closeFunc) {
 		config.InitialFields[k] = v
 	}
 
-	switch strings.ToLower(o.loggerLevel) {
+	switch strings.ToLower(o.logger.level) {
 	case "debug":
 		config.Level.SetLevel(zapcore.DebugLevel)
 	case "info":
@@ -260,58 +257,19 @@ func createPrometheus(o options) (metric.Meter, http.Handler) {
 	return meter, handler
 }
 
-func createJaeger(o options) (trace.Tracer, closeFunc) {
-	resource := createResource(o)
-
-	var endpointOpt jaegerexporter.EndpointOption
-	switch {
-	case o.jaegerAgentHost != "" || o.jaegerAgentPort != "":
-		endpointOpt = jaegerexporter.WithAgentEndpoint(
-			jaegerexporter.WithAgentHost(o.jaegerAgentHost),
-			jaegerexporter.WithAgentPort(o.jaegerAgentPort),
-			jaegerexporter.WithAttemptReconnectingInterval(5*time.Second),
-		)
-	case o.jaegerCollectorEndpoint != "" || (o.jaegerCollectorUsername != "" && o.jaegerCollectorPassword != ""):
-		endpointOpt = jaegerexporter.WithCollectorEndpoint(
-			jaegerexporter.WithEndpoint(o.jaegerCollectorEndpoint),
-			jaegerexporter.WithUsername(o.jaegerCollectorUsername),
-			jaegerexporter.WithPassword(o.jaegerCollectorPassword),
-		)
-	}
-
-	exporter, err := jaegerexporter.New(endpointOpt)
-	if err != nil {
-		panic(err)
-	}
-
-	// TODO: Use a smarter sampler
-	sampler := tracesdk.AlwaysSample()
-
-	provider := tracesdk.NewTracerProvider(
-		tracesdk.WithResource(resource),
-		tracesdk.WithBatcher(exporter),
-		tracesdk.WithSampler(sampler),
-	)
-
-	otel.SetTracerProvider(provider)
-	tracer := provider.Tracer(o.name)
-
-	return tracer, provider.Shutdown
-}
-
-func createOpenTelemetry(o options) (metric.Meter, trace.Tracer, closeFunc) {
+func createOpenTelemetryMeter(o options) (metric.Meter, closeFunc) {
 	ctx := context.Background()
 	resource := createResource(o)
 
 	// ====================> Meter Provider <====================
 
-	metricEndpointOpt := otlpmetricgrpc.WithEndpoint(o.opentelemetryCollectorAddress)
+	metricEndpointOpt := otlpmetricgrpc.WithEndpoint(o.opentelemetry.collectorAddress)
 
 	var metricAuthOpt otlpmetricgrpc.Option
-	if o.opentelemetryCollectorCredentials == nil {
+	if o.opentelemetry.collectorCredentials == nil {
 		metricAuthOpt = otlpmetricgrpc.WithInsecure()
 	} else {
-		metricAuthOpt = otlpmetricgrpc.WithTLSCredentials(o.opentelemetryCollectorCredentials)
+		metricAuthOpt = otlpmetricgrpc.WithTLSCredentials(o.opentelemetry.collectorCredentials)
 	}
 
 	metricExporter, err := otlpmetricgrpc.New(ctx, metricEndpointOpt, metricAuthOpt)
@@ -326,15 +284,29 @@ func createOpenTelemetry(o options) (metric.Meter, trace.Tracer, closeFunc) {
 		metricsdk.WithResource(resource),
 	)
 
+	// ====================> Set Globals <====================
+
+	otel.SetMeterProvider(meterProvider)
+
+	meter := meterProvider.Meter(o.name)
+	close := meterProvider.Shutdown
+
+	return meter, close
+}
+
+func createOpenTelemetryTracer(o options) (trace.Tracer, closeFunc) {
+	ctx := context.Background()
+	resource := createResource(o)
+
 	// ====================> Trace Provider <====================
 
-	traceEndpointOpt := otlptracegrpc.WithEndpoint(o.opentelemetryCollectorAddress)
+	traceEndpointOpt := otlptracegrpc.WithEndpoint(o.opentelemetry.collectorAddress)
 
 	var traceAuthOpt otlptracegrpc.Option
-	if o.opentelemetryCollectorCredentials == nil {
+	if o.opentelemetry.collectorCredentials == nil {
 		traceAuthOpt = otlptracegrpc.WithInsecure()
 	} else {
-		traceAuthOpt = otlptracegrpc.WithTLSCredentials(o.opentelemetryCollectorCredentials)
+		traceAuthOpt = otlptracegrpc.WithTLSCredentials(o.opentelemetry.collectorCredentials)
 	}
 
 	traceExporter, err := otlptracegrpc.New(ctx, traceEndpointOpt, traceAuthOpt)
@@ -355,23 +327,11 @@ func createOpenTelemetry(o options) (metric.Meter, trace.Tracer, closeFunc) {
 
 	// ====================> Set Globals <====================
 
-	otel.SetMeterProvider(meterProvider)
 	otel.SetTracerProvider(traceProvider)
 	otel.SetTextMapPropagator(propagation.TraceContext{})
 
-	meter := meterProvider.Meter(o.name)
 	tracer := traceProvider.Tracer(o.name)
+	close := traceProvider.Shutdown
 
-	close := func(ctx context.Context) error {
-		g := new(errgroup.Group)
-		g.Go(func() error {
-			return meterProvider.Shutdown(ctx)
-		})
-		g.Go(func() error {
-			return traceProvider.Shutdown(ctx)
-		})
-		return g.Wait()
-	}
-
-	return meter, tracer, close
+	return tracer, close
 }

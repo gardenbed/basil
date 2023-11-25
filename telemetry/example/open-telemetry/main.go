@@ -79,7 +79,7 @@ func main() {
 	// Creating a new probe and set it as the singleton
 	p := telemetry.NewProbe(
 		telemetry.WithLogger("info"),
-		telemetry.WithOpenTelemetry("localhost:55680", nil),
+		telemetry.WithOpenTelemetry(true, true, "localhost:55680", nil),
 		telemetry.WithMetadata("my-service", "0.1.0", map[string]string{
 			"environment": "example",
 		}),
