@@ -44,7 +44,7 @@ func main() {
 	creds := insecure.NewCredentials()
 	opts := ci.DialOptions()
 	opts = append(opts, grpc.WithTransportCredentials(creds))
-	conn, err := grpc.Dial(grpcServer, opts...)
+	conn, err := grpc.NewClient(grpcServer, opts...)
 	if err != nil {
 		panic(err)
 	}
