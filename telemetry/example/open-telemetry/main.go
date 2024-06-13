@@ -101,5 +101,5 @@ func main() {
 	srv.Handle(ctx)
 
 	// Wait before exiting
-	_ = fmt.Scanln()
+	_, _ = fmt.Scanln()
 }
