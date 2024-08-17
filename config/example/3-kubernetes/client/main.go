@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gardenbed/basil/config"
-	"github.com/gardenbed/basil/config/example/logger"
+	"github.com/gardenbed/basil/config/example/log"
 )
 
 var params = struct {
@@ -16,14 +16,13 @@ var params = struct {
 	ServerAddress string
 }{
 	// default values
-	LogLevel:      "info",
+	LogLevel:      "Info",
 	ServerAddress: "http://localhost:8080",
 }
 
 func main() {
-	logger := &logger.Logger{
-		Level: logger.Info,
-	}
+	logger := new(log.Logger)
+	logger.SetLevel("info")
 
 	// Server address
 	endpoint := "/"
@@ -50,7 +49,7 @@ func main() {
 	defer close()
 
 	// Sending requests to server
-	logger.Infof("start sending requests ...")
+	logger.Info("start sending requests ...")
 
 	client := &http.Client{
 		Timeout:   5 * time.Second,
@@ -63,13 +62,13 @@ func main() {
 	for range ticker.C {
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
-			logger.Errorf(err.Error())
+			logger.Error(err)
 			continue
 		}
 
 		resp, err := client.Do(req)
 		if err != nil {
-			logger.Errorf(err.Error())
+			logger.Error(err)
 			continue
 		}
 
