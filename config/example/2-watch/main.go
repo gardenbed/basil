@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/gardenbed/basil/config"
-	"github.com/gardenbed/basil/config/example/logger"
+	"github.com/gardenbed/basil/config/example/log"
 )
 
 // the single source of truth for all configurations
@@ -17,9 +17,8 @@ var params = struct {
 }
 
 func main() {
-	logger := &logger.Logger{
-		Level: logger.Info,
-	}
+	logger := new(log.Logger)
+	logger.SetLevel("info")
 
 	// Listening for configuration values and acting on them
 	ch := make(chan config.Update, 1)
@@ -41,34 +40,34 @@ func main() {
 	startLogging(logger)
 }
 
-func startLogging(logger *logger.Logger) {
+func startLogging(logger *log.Logger) {
 	wait := make(chan struct{}, 4)
 
 	go func() {
 		t1 := time.NewTicker(500 * time.Millisecond)
 		for range t1.C {
-			logger.Debugf("Debugging ...")
+			logger.Debug("Debugging ...")
 		}
 	}()
 
 	go func() {
 		t2 := time.NewTicker(1 * time.Second)
 		for range t2.C {
-			logger.Infof("Informing ...")
+			logger.Info("Informing ...")
 		}
 	}()
 
 	go func() {
 		t3 := time.NewTicker(2 * time.Second)
 		for range t3.C {
-			logger.Warnf("Warning ...")
+			logger.Warn("Warning ...")
 		}
 	}()
 
 	go func() {
 		t4 := time.NewTicker(4 * time.Second)
 		for range t4.C {
-			logger.Errorf("Erroring ...")
+			logger.Error("Erroring ...")
 		}
 	}()
 

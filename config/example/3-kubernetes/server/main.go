@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/gardenbed/basil/config"
-	"github.com/gardenbed/basil/config/example/logger"
+	"github.com/gardenbed/basil/config/example/log"
 )
 
 var params = struct {
@@ -13,13 +13,12 @@ var params = struct {
 	LogLevel string
 }{
 	// default value
-	LogLevel: "Info",
+	LogLevel: "info",
 }
 
 func main() {
-	logger := &logger.Logger{
-		Level: logger.Info,
-	}
+	logger := new(log.Logger)
+	logger.SetLevel("info")
 
 	// Listening for any update to configurations
 	ch := make(chan config.Update)
@@ -42,11 +41,11 @@ func main() {
 
 	// HTTP handler
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		logger.Infof("new request received")
+		logger.Info("new request received")
 		w.WriteHeader(http.StatusOK)
 	})
 
 	// Starting the HTTP server
-	logger.Infof("starting http server ...")
+	logger.Info("starting http server ...")
 	_ = http.ListenAndServe(":8080", nil)
 }
