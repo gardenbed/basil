@@ -1,8 +1,6 @@
 module github.com/gardenbed/basil
 
-go 1.22.7
-
-toolchain go1.23.3
+go 1.23.3
 
 require (
 	github.com/fsnotify/fsnotify v1.8.0
