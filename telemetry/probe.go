@@ -212,13 +212,20 @@ func createLogger(o options) (Logger, closeFunc) {
 		config.Level.SetLevel(zapcore.Level(99))
 	}
 
-	l, _ := config.Build(
+	l := zap.Must(config.Build(
 		zap.AddCaller(),
 		zap.AddCallerSkip(0),
-	)
+	))
 
 	close := func(context.Context) error {
-		return l.Sync()
+		err := l.Sync()
+
+		// This is a workaround for this issue: https://github.com/uber-go/zap/issues/880
+		if err != nil && strings.Contains(err.Error(), "sync /dev/stdout") {
+			err = nil
+		}
+
+		return err
 	}
 
 	return &zapLogger{

@@ -1,4 +1,4 @@
-// package config is a minimal and unopinionated library for reading configuration values in Go applications
+// Package config is a minimal and unopinionated library for reading configuration values in Go applications
 // based on The 12-Factor App (https://12factor.net/config).
 package config
 
@@ -153,7 +153,7 @@ func Watch(config sync.Locker, subscribers []chan Update, opts ...Option) (func(
 	}
 
 	close := func() {
-		watcher.Close()
+		_ = watcher.Close()
 		// TODO: closing subscriber channels causes data race if notifySubscribers is writing to any
 		/* for _, sub := range c.subscribers {
 			close(sub)

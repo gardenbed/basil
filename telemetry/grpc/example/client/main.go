@@ -31,7 +31,12 @@ func main() {
 			"environment": "testing",
 		}),
 	)
-	defer probe.Close(context.Background())
+
+	defer func() {
+		if err := probe.Close(context.Background()); err != nil {
+			panic(err)
+		}
+	}()
 
 	ci := grpctelemetry.NewClientInterceptor(probe, grpctelemetry.Options{})
 
@@ -48,7 +53,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer conn.Close()
+
+	defer func() {
+		if err := conn.Close(); err != nil {
+			panic(err)
+		}
+	}()
 
 	client := zonePB.NewZoneManagerClient(conn)
 	probe.Logger().Infof("client connected to server at %s", grpcServer)

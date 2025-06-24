@@ -19,7 +19,7 @@ func NewServer(name string, port uint16) *Server {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-		fmt.Fprintf(w, "Hello, World!")
+		_, _ = fmt.Fprintf(w, "Hello, World!")
 	})
 
 	server := &http.Server{

@@ -17,7 +17,7 @@ func main() {
 	log.Printf("making service-to-service calls using this token: %s", params.AuthToken)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
-		fmt.Fprintln(w, "Hello, World!")
+		_, _ = fmt.Fprintln(w, "Hello, World!")
 	})
 
 	log.Fatal(http.ListenAndServe(":8080", nil))

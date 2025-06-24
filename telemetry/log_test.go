@@ -21,7 +21,7 @@ func TestVoidLogger(t *testing.T) {
 	logger.Warnf("warn %s", "this")
 	logger.Error("error", "key", "value")
 	logger.Errorf("error %s", "this")
-	logger.Close()
+	assert.NoError(t, logger.Close())
 }
 
 func TestZapLogger(t *testing.T) {
@@ -45,7 +45,7 @@ func TestZapLogger(t *testing.T) {
 		logger.Warnf("warn %s", "this")
 		logger.Error("error", "key", "value")
 		logger.Errorf("error %s", "this")
-		logger.Close()
+		assert.NoError(t, logger.Close())
 	})
 
 	t.Run("Debug", func(t *testing.T) {
@@ -68,7 +68,7 @@ func TestZapLogger(t *testing.T) {
 		logger.Warnf("warn %s", "this")
 		logger.Error("error", "key", "value")
 		logger.Errorf("error %s", "this")
-		logger.Close()
+		assert.NoError(t, logger.Close())
 	})
 
 	t.Run("Info", func(t *testing.T) {
@@ -91,7 +91,7 @@ func TestZapLogger(t *testing.T) {
 		logger.Warnf("warn %s", "this")
 		logger.Error("error", "key", "value")
 		logger.Errorf("error %s", "this")
-		logger.Close()
+		assert.NoError(t, logger.Close())
 	})
 
 	t.Run("Warn", func(t *testing.T) {
@@ -114,7 +114,7 @@ func TestZapLogger(t *testing.T) {
 		logger.Warnf("warn %s", "this")
 		logger.Error("error", "key", "value")
 		logger.Errorf("error %s", "this")
-		logger.Close()
+		assert.NoError(t, logger.Close())
 	})
 
 	t.Run("Error", func(t *testing.T) {
@@ -137,6 +137,6 @@ func TestZapLogger(t *testing.T) {
 		logger.Warnf("warn %s", "this")
 		logger.Error("error", "key", "value")
 		logger.Errorf("error %s", "this")
-		logger.Close()
+		assert.NoError(t, logger.Close())
 	})
 }

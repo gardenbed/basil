@@ -74,7 +74,10 @@ func TestOptionsFromEnv(t *testing.T) {
 				if err := os.Setenv(envar.name, envar.value); err != nil {
 					t.Fatalf("Failed to set environment variable %s: %s", envar.name, err)
 				}
-				defer os.Unsetenv(envar.name)
+
+				defer func() {
+					assert.NoError(t, os.Unsetenv(envar.name))
+				}()
 			}
 
 			options := optionsFromEnv()

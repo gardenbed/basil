@@ -314,7 +314,10 @@ func TestReaderFromEnv(t *testing.T) {
 			for name, value := range tc.env {
 				err := os.Setenv(name, value)
 				assert.NoError(t, err)
-				defer os.Unsetenv(name)
+
+				defer func() {
+					assert.NoError(t, os.Unsetenv(name))
+				}()
 			}
 
 			assert.Equal(t, tc.expectedReader, readerFromEnv())
@@ -642,20 +645,29 @@ func TestReaderGetFieldValue(t *testing.T) {
 			// Set value in an environment variable
 			err := os.Setenv(tc.envConfig.varName, tc.envConfig.value)
 			assert.NoError(t, err)
-			defer os.Unsetenv(tc.envConfig.varName)
+
+			defer func() {
+				assert.NoError(t, os.Unsetenv(tc.envConfig.varName))
+			}()
 
 			// Testing Telepresence option
 			if tc.r.telepresence {
 				err := os.Setenv(envTelepresenceRoot, "/")
 				assert.NoError(t, err)
-				defer os.Unsetenv(envTelepresenceRoot)
+
+				defer func() {
+					assert.NoError(t, os.Unsetenv(envTelepresenceRoot))
+				}()
 			}
 
 			// Write value in a temporary config file
 
 			tmpfile, err := os.CreateTemp("", "gotest_")
 			assert.NoError(t, err)
-			defer os.Remove(tmpfile.Name())
+
+			defer func() {
+				assert.NoError(t, os.Remove(tmpfile.Name()))
+			}()
 
 			_, err = tmpfile.WriteString(tc.fileConfig.value)
 			assert.NoError(t, err)
@@ -665,7 +677,10 @@ func TestReaderGetFieldValue(t *testing.T) {
 
 			err = os.Setenv(tc.fileConfig.varName, tmpfile.Name())
 			assert.NoError(t, err)
-			defer os.Unsetenv(tc.fileConfig.varName)
+
+			defer func() {
+				assert.NoError(t, os.Unsetenv(tc.fileConfig.varName))
+			}()
 
 			// Verify
 			value, filePath := tc.r.getFieldValue(tc.fieldName, tc.flagName, tc.envName, tc.fileEnvName)
@@ -1052,21 +1067,30 @@ func TestReadFields(t *testing.T) {
 			for _, e := range tc.envs {
 				err := os.Setenv(e.varName, e.value)
 				assert.NoError(t, err)
-				defer os.Unsetenv(e.varName)
+
+				defer func() {
+					assert.NoError(t, os.Unsetenv(e.varName))
+				}()
 			}
 
 			// Testing Telepresence option
 			if tc.r.telepresence {
 				err := os.Setenv(envTelepresenceRoot, "/")
 				assert.NoError(t, err)
-				defer os.Unsetenv(envTelepresenceRoot)
+
+				defer func() {
+					assert.NoError(t, os.Unsetenv(envTelepresenceRoot))
+				}()
 			}
 
 			// Write configuration files
 			for _, f := range tc.files {
 				tmpfile, err := os.CreateTemp("", "gotest_")
 				assert.NoError(t, err)
-				defer os.Remove(tmpfile.Name())
+
+				defer func() {
+					assert.NoError(t, os.Remove(tmpfile.Name()))
+				}()
 
 				_, err = tmpfile.WriteString(f.value)
 				assert.NoError(t, err)
@@ -1076,7 +1100,10 @@ func TestReadFields(t *testing.T) {
 
 				err = os.Setenv(f.varName, tmpfile.Name())
 				assert.NoError(t, err)
-				defer os.Unsetenv(f.varName)
+
+				defer func() {
+					assert.NoError(t, os.Unsetenv(f.varName))
+				}()
 			}
 
 			vStruct, err := validateStruct(tc.s)
