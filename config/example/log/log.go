@@ -1,3 +1,4 @@
+// Package log provides a toy logger for the examples.
 package log
 
 import (

@@ -724,21 +724,30 @@ func TestPick(t *testing.T) {
 			for _, e := range tc.envs {
 				err := os.Setenv(e.varName, e.value)
 				assert.NoError(t, err)
-				defer os.Unsetenv(e.varName)
+
+				defer func() {
+					assert.NoError(t, os.Unsetenv(e.varName))
+				}()
 			}
 
 			// Testing Telepresence option
 			if c.telepresence {
 				err := os.Setenv(envTelepresenceRoot, "/")
 				assert.NoError(t, err)
-				defer os.Unsetenv(envTelepresenceRoot)
+
+				defer func() {
+					assert.NoError(t, os.Unsetenv(envTelepresenceRoot))
+				}()
 			}
 
 			// Write configuration files
 			for _, f := range tc.files {
 				tmpfile, err := os.CreateTemp("", "gotest_")
 				assert.NoError(t, err)
-				defer os.Remove(tmpfile.Name())
+
+				defer func() {
+					assert.NoError(t, os.Remove(tmpfile.Name()))
+				}()
 
 				_, err = tmpfile.WriteString(f.value)
 				assert.NoError(t, err)
@@ -748,7 +757,10 @@ func TestPick(t *testing.T) {
 
 				err = os.Setenv(f.varName, tmpfile.Name())
 				assert.NoError(t, err)
-				defer os.Unsetenv(f.varName)
+
+				defer func() {
+					assert.NoError(t, os.Unsetenv(f.varName))
+				}()
 			}
 
 			err := Pick(tc.config, tc.opts...)
@@ -1025,26 +1037,36 @@ func TestWatch(t *testing.T) {
 			// Set environment variables
 			for _, e := range tc.envs {
 				err := os.Setenv(e.varName, e.value)
-				defer os.Unsetenv(e.varName)
 				assert.NoError(t, err)
+
+				defer func() {
+					assert.NoError(t, os.Unsetenv(e.varName))
+				}()
 			}
 
-			// Testing Telepresence option
 			r := &reader{}
 			for _, opt := range tc.opts {
 				opt(r)
 			}
+
+			// Testing Telepresence option
 			if r.telepresence {
 				err := os.Setenv(envTelepresenceRoot, "/")
-				defer os.Unsetenv(envTelepresenceRoot)
 				assert.NoError(t, err)
+
+				defer func() {
+					assert.NoError(t, os.Unsetenv(envTelepresenceRoot))
+				}()
 			}
 
 			// Write configuration files
 			for _, f := range tc.files {
 				tmpfile, err := os.CreateTemp("", "gotest_")
 				assert.NoError(t, err)
-				defer os.Remove(tmpfile.Name())
+
+				defer func() {
+					assert.NoError(t, os.Remove(tmpfile.Name()))
+				}()
 
 				_, err = tmpfile.WriteString(f.initValue)
 				assert.NoError(t, err)
@@ -1054,7 +1076,10 @@ func TestWatch(t *testing.T) {
 
 				err = os.Setenv(f.varName, tmpfile.Name())
 				assert.NoError(t, err)
-				defer os.Unsetenv(f.varName)
+
+				defer func() {
+					assert.NoError(t, os.Unsetenv(f.varName))
+				}()
 
 				// Will write the new value to the file
 				wg.Add(1)

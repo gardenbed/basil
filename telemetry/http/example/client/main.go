@@ -22,7 +22,12 @@ func main() {
 			"environment": "testing",
 		}),
 	)
-	defer probe.Close(context.Background())
+
+	defer func() {
+		if err := probe.Close(context.Background()); err != nil {
+			panic(err)
+		}
+	}()
 
 	c := &http.Client{
 		Timeout:   10 * time.Second,

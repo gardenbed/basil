@@ -22,7 +22,12 @@ func main() {
 			"environment": "testing",
 		}),
 	)
-	defer probe.Close(context.Background())
+
+	defer func() {
+		if err := probe.Close(context.Background()); err != nil {
+			panic(err)
+		}
+	}()
 
 	mid := httptelemetry.NewMiddleware(probe, httptelemetry.Options{})
 

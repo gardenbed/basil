@@ -176,12 +176,14 @@ func TestNewVoidProbe(t *testing.T) {
 
 func TestNewProbe(t *testing.T) {
 	tests := []struct {
-		name string
-		opts []Option
+		name           string
+		opts           []Option
+		skipCloseError bool
 	}{
 		{
-			name: "NoOption",
-			opts: []Option{},
+			name:           "NoOption",
+			opts:           []Option{},
+			skipCloseError: false,
 		},
 		{
 			name: "Prometheus",
@@ -192,6 +194,7 @@ func TestNewProbe(t *testing.T) {
 				WithLogger("warn"),
 				WithPrometheus(),
 			},
+			skipCloseError: false,
 		},
 		{
 			name: "OpenTelemetry",
@@ -202,13 +205,20 @@ func TestNewProbe(t *testing.T) {
 				WithLogger("warn"),
 				WithOpenTelemetry(true, true, "localhost:55680", nil),
 			},
+			skipCloseError: true,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(T *testing.T) {
 			probe := NewProbe(tc.opts...)
-			defer probe.Close(context.Background())
+
+			defer func() {
+				err := probe.Close(context.Background())
+				if !tc.skipCloseError {
+					assert.NoError(t, err)
+				}
+			}()
 
 			assert.NotNil(t, probe)
 			assert.NotNil(t, probe.Logger())

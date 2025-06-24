@@ -1,4 +1,4 @@
-// httpx provides extensions for http applications and services.
+// Package httpx provides extensions for http applications and services.
 package httpx
 
 import (

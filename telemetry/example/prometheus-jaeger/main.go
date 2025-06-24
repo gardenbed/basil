@@ -85,7 +85,12 @@ func main() {
 			"environment": "example",
 		}),
 	)
-	defer p.Close(ctx)
+
+	defer func() {
+		if err := p.Close(ctx); err != nil {
+			panic(err)
+		}
+	}()
 
 	telemetry.Set(p)
 
