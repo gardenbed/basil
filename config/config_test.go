@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gardenbed/basil/ptr"
-
 	"github.com/stretchr/testify/assert"
+
+	"github.com/gardenbed/basil/ptr"
 )
 
 type config struct {
@@ -217,48 +217,48 @@ func TestPick(t *testing.T) {
 		expectedConfig *config
 	}{
 		{
-			"NonStruct",
-			[]string{"app"},
-			[]env{},
-			[]file{},
-			new(string),
-			nil,
-			errors.New("a non-struct type is passed"),
-			&config{},
+			name:           "NonStruct",
+			args:           []string{"app"},
+			envs:           []env{},
+			files:          []file{},
+			config:         new(string),
+			opts:           nil,
+			expectedError:  errors.New("a non-struct type is passed"),
+			expectedConfig: &config{},
 		},
 		{
-			"NonPointer",
-			[]string{"app"},
-			[]env{},
-			[]file{},
-			config{},
-			nil,
-			errors.New("a non-pointer type is passed"),
-			&config{},
+			name:           "NonPointer",
+			args:           []string{"app"},
+			envs:           []env{},
+			files:          []file{},
+			config:         config{},
+			opts:           nil,
+			expectedError:  errors.New("a non-pointer type is passed"),
+			expectedConfig: &config{},
 		},
 		{
-			"Empty",
-			[]string{"app"},
-			[]env{},
-			[]file{},
-			&config{},
-			nil,
-			nil,
-			&config{},
+			name:           "Empty",
+			args:           []string{"app"},
+			envs:           []env{},
+			files:          []file{},
+			config:         &config{},
+			opts:           nil,
+			expectedError:  nil,
+			expectedConfig: &config{},
 		},
 		{
-			"AllFromDefaults",
-			[]string{"app"},
-			[]env{},
-			[]file{},
-			&cfg,
-			nil,
-			nil,
-			&cfg,
+			name:           "AllFromDefaults",
+			args:           []string{"app"},
+			envs:           []env{},
+			files:          []file{},
+			config:         &cfg,
+			opts:           nil,
+			expectedError:  nil,
+			expectedConfig: &cfg,
 		},
 		{
-			"AllFromFlags",
-			[]string{
+			name: "AllFromFlags",
+			args: []string{
 				"app",
 				"-string=foo",
 				"-bool",
@@ -312,16 +312,16 @@ func TestPick(t *testing.T) {
 				"-regexp.slice=[:digit:],[:alpha:]",
 				"-duration.slice=1s,1m",
 			},
-			[]env{},
-			[]file{},
-			&config{},
-			nil,
-			nil,
-			&cfg,
+			envs:           []env{},
+			files:          []file{},
+			config:         &config{},
+			opts:           nil,
+			expectedError:  nil,
+			expectedConfig: &cfg,
 		},
 		{
-			"AllFromFlagsWithOptions",
-			[]string{
+			name: "AllFromFlagsWithOptions",
+			args: []string{
 				"app",
 				"-config.string=foo",
 				"-config.bool",
@@ -375,20 +375,20 @@ func TestPick(t *testing.T) {
 				"-config.regexp.slice=[:digit:]|[:alpha:]",
 				"-config.duration.slice=1s|1m",
 			},
-			[]env{},
-			[]file{},
-			&config{},
-			[]Option{
+			envs:   []env{},
+			files:  []file{},
+			config: &config{},
+			opts: []Option{
 				ListSep("|"),
 				PrefixFlag("config."),
 			},
-			nil,
-			&cfg,
+			expectedError:  nil,
+			expectedConfig: &cfg,
 		},
 		{
-			"AllFromEnvVars",
-			[]string{"app"},
-			[]env{
+			name: "AllFromEnvVars",
+			args: []string{"app"},
+			envs: []env{
 				{"STRING", "foo"},
 				{"BOOL", "true"},
 				{"FLOAT32", "3.1415"},
@@ -441,16 +441,16 @@ func TestPick(t *testing.T) {
 				{"REGEXP_SLICE", "[:digit:],[:alpha:]"},
 				{"DURATION_SLICE", "1s,1m"},
 			},
-			[]file{},
-			&config{},
-			nil,
-			nil,
-			&cfg,
+			files:          []file{},
+			config:         &config{},
+			opts:           nil,
+			expectedError:  nil,
+			expectedConfig: &cfg,
 		},
 		{
-			"AllFromEnvVarsWithOptions",
-			[]string{"app"},
-			[]env{
+			name: "AllFromEnvVarsWithOptions",
+			args: []string{"app"},
+			envs: []env{
 				{"CONFIG_STRING", "foo"},
 				{"CONFIG_BOOL", "true"},
 				{"CONFIG_FLOAT32", "3.1415"},
@@ -503,20 +503,20 @@ func TestPick(t *testing.T) {
 				{"CONFIG_REGEXP_SLICE", "[:digit:]|[:alpha:]"},
 				{"CONFIG_DURATION_SLICE", "1s|1m"},
 			},
-			[]file{},
-			&config{},
-			[]Option{
+			files:  []file{},
+			config: &config{},
+			opts: []Option{
 				ListSep("|"),
 				PrefixEnv("CONFIG_"),
 			},
-			nil,
-			&cfg,
+			expectedError:  nil,
+			expectedConfig: &cfg,
 		},
 		{
-			"AllFromFromFiles",
-			[]string{"app"},
-			[]env{},
-			[]file{
+			name: "AllFromFromFiles",
+			args: []string{"app"},
+			envs: []env{},
+			files: []file{
 				{"STRING_FILE", "foo"},
 				{"BOOL_FILE", "true"},
 				{"FLOAT32_FILE", "3.1415"},
@@ -569,16 +569,16 @@ func TestPick(t *testing.T) {
 				{"REGEXP_SLICE_FILE", "[:digit:],[:alpha:]"},
 				{"DURATION_SLICE_FILE", "1s,1m"},
 			},
-			&config{},
-			nil,
-			nil,
-			&cfg,
+			config:         &config{},
+			opts:           nil,
+			expectedError:  nil,
+			expectedConfig: &cfg,
 		},
 		{
-			"AllFromFromFilesWithOptions",
-			[]string{"app"},
-			[]env{},
-			[]file{
+			name: "AllFromFromFilesWithOptions",
+			args: []string{"app"},
+			envs: []env{},
+			files: []file{
 				{"CONFIG_STRING_FILE", "foo"},
 				{"CONFIG_BOOL_FILE", "true"},
 				{"CONFIG_FLOAT32_FILE", "3.1415"},
@@ -631,19 +631,19 @@ func TestPick(t *testing.T) {
 				{"CONFIG_REGEXP_SLICE_FILE", "[:digit:]|[:alpha:]"},
 				{"CONFIG_DURATION_SLICE_FILE", "1s|1m"},
 			},
-			&config{},
-			[]Option{
+			config: &config{},
+			opts: []Option{
 				ListSep("|"),
 				PrefixFileEnv("CONFIG_"),
 			},
-			nil,
-			&cfg,
+			expectedError:  nil,
+			expectedConfig: &cfg,
 		},
 		{
-			"WithTelepresenceOption",
-			[]string{"app"},
-			[]env{},
-			[]file{
+			name: "WithTelepresenceOption",
+			args: []string{"app"},
+			envs: []env{},
+			files: []file{
 				{"STRING_FILE", "foo"},
 				{"BOOL_FILE", "true"},
 				{"FLOAT32_FILE", "3.1415"},
@@ -696,12 +696,12 @@ func TestPick(t *testing.T) {
 				{"REGEXP_SLICE_FILE", "[:digit:],[:alpha:]"},
 				{"DURATION_SLICE_FILE", "1s,1m"},
 			},
-			&config{},
-			[]Option{
+			config: &config{},
+			opts: []Option{
 				Telepresence(),
 			},
-			nil,
-			&cfg,
+			expectedError:  nil,
+			expectedConfig: &cfg,
 		},
 	}
 
@@ -989,36 +989,36 @@ func TestWatch(t *testing.T) {
 		expectedUpdates    []Update
 	}{
 		{
-			"BlockingChannels",
-			[]string{"app"},
-			[]env{},
-			files,
-			&config{},
-			[]chan Update{
+			name:   "BlockingChannels",
+			args:   []string{"app"},
+			envs:   []env{},
+			files:  files,
+			config: &config{},
+			subscribers: []chan Update{
 				make(chan Update),
 				make(chan Update),
 			},
-			[]Option{},
-			nil,
-			&old,
-			&new,
-			updates,
+			opts:               []Option{},
+			expectedError:      nil,
+			expectedInitConfig: &old,
+			expectedNewConfig:  &new,
+			expectedUpdates:    updates,
 		},
 		{
-			"BufferedChannels",
-			[]string{"app"},
-			[]env{},
-			files,
-			&config{},
-			[]chan Update{
+			name:   "BufferedChannels",
+			args:   []string{"app"},
+			envs:   []env{},
+			files:  files,
+			config: &config{},
+			subscribers: []chan Update{
 				make(chan Update, 100),
 				make(chan Update, 100),
 			},
-			[]Option{},
-			nil,
-			&old,
-			&new,
-			updates,
+			opts:               []Option{},
+			expectedError:      nil,
+			expectedInitConfig: &old,
+			expectedNewConfig:  &new,
+			expectedUpdates:    updates,
 		},
 	}
 
@@ -1110,7 +1110,6 @@ func TestWatch(t *testing.T) {
 				defer close()
 
 				tc.config.Lock()
-				// assert.Equal(t, tc.expectedInitConfig, tc.config)
 				assert.True(t, tc.config.Equal(tc.expectedInitConfig))
 				tc.config.Unlock()
 
