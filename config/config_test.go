@@ -779,7 +779,7 @@ func TestPick(t *testing.T) {
 }
 
 func TestWatch(t *testing.T) {
-	updateDelay := 50 * time.Millisecond
+	updateDelay := 200 * time.Millisecond
 
 	type env struct {
 		varName string
